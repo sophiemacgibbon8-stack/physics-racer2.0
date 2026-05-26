@@ -720,17 +720,10 @@ function toggleHostPlay() {
 let S = {
   level:1, name:'', qs:[], qi:0, total:10,
   correct:0, order:[], timerID:null, timer:20, locked:false,
-  unlocked:Array(9).fill(false)
+  unlocked:Array(9).fill(true)
 };
-S.unlocked[0] = true;
 
-function loadUnlocks(){
-  try {
-    const u = JSON.parse(localStorage.getItem('prU')||'null');
-    if(u && Array.isArray(u)) S.unlocked = Array(9).fill(false).map((_,i)=>i<u.length?!!u[i]:false);
-    S.unlocked[0] = true;
-  } catch(e){}
-}
+function loadUnlocks(){}
 function saveUnlocks(){ localStorage.setItem('prU', JSON.stringify(S.unlocked)); }
 
 function startSolo() {
