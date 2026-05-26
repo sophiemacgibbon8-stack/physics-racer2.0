@@ -634,7 +634,7 @@ function sndTick()     { beep([[800,.0]], .05, 'square', .08); }
 function show(id) {
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
-  if (id==='screen-solo-setup') buildLvGrid('solo-lv-grid', S.level, n=>{ S.level=n; }, false);
+  if (id==='screen-solo-setup') buildLvGrid('solo-lv-grid', S.level, n=>{ S.level=n; }, true);
   if (id==='screen-host-setup') buildLvGrid('host-lv-grid', M.level, n=>{ M.level=n; }, true);
 }
 function shuffle(a) {
@@ -1202,7 +1202,7 @@ document.head.appendChild(shakeStyle);
 
 // ── INIT ──────────────────────────────────────────────────────────────────
 loadUnlocks();
-buildLvGrid('solo-lv-grid', S.level, n=>{ S.level=n; });
+buildLvGrid('solo-lv-grid', S.level, n=>{ S.level=n; }, true);
 buildLvGrid('host-lv-grid', M.level, n=>{ M.level=n; }, true);
 if(!SOCKET_OK){
   document.querySelectorAll('[onclick="show(\'screen-host-setup\')"]').forEach(b=>{
