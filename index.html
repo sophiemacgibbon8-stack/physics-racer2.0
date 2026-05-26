@@ -1,0 +1,1222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Physics Racer | On the Move</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Segoe UI',Arial,sans-serif;background:#0a0a1a;color:#fff;height:100vh;overflow:hidden;user-select:none;}
+.screen{display:none;width:100vw;height:100vh;position:absolute;top:0;left:0;}
+.screen.active{display:flex;flex-direction:column;align-items:center;justify-content:center;animation:fadeIn .3s ease-out;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── HOME ────────────────────────────────────────────────────────────── */
+#screen-home{background:radial-gradient(ellipse at 50% 40%,#1a1a3e 0%,#0a0a1a 70%);}
+.home-title{font-size:3.8em;font-weight:900;letter-spacing:-2px;background:linear-gradient(135deg,#ff6b35,#ffd700,#ff6b35);background-size:200%;-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:shimmer 3s linear infinite;text-align:center;}
+@keyframes shimmer{0%{background-position:-200% center}100%{background-position:200% center}}
+.home-sub{font-size:.88em;color:#555;letter-spacing:4px;text-transform:uppercase;margin-bottom:40px;text-align:center;}
+.home-btns{display:flex;flex-direction:column;align-items:center;gap:10px;}
+.home-road{position:absolute;bottom:0;width:100%;height:80px;background:#181825;border-top:3px solid #2a2a3e;overflow:hidden;}
+.road-dashes{position:absolute;top:50%;left:0;width:300%;height:4px;margin-top:-2px;background:repeating-linear-gradient(90deg,rgba(255,255,255,.4) 0,rgba(255,255,255,.4) 40px,transparent 40px,transparent 80px);animation:rd .7s linear infinite;}
+@keyframes rd{from{transform:translateX(0)}to{transform:translateX(-80px)}}
+.home-car{position:absolute;top:50%;transform:translateY(-65%) scaleX(-1);animation:hcar 5s linear infinite;filter:drop-shadow(0 3px 8px rgba(0,0,0,.7));}
+@keyframes hcar{0%{left:-80px}100%{left:calc(100% + 80px)}}
+
+/* ── BUTTONS ─────────────────────────────────────────────────────────── */
+.btn{padding:13px 38px;font-size:.98em;border:none;border-radius:50px;cursor:pointer;font-weight:700;letter-spacing:1px;text-transform:uppercase;transition:all .2s;position:relative;overflow:hidden;}
+.btn::after{content:'';position:absolute;inset:0;background:rgba(255,255,255,0);transition:background .15s;}
+.btn:hover::after{background:rgba(255,255,255,.08);}
+.btn:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(0,0,0,.45);}
+.btn:active{transform:translateY(0);}
+.btn-orange{background:linear-gradient(135deg,#ff6b35,#e05020);color:#fff;}
+.btn-teal{background:linear-gradient(135deg,#4ecdc4,#2bb5ad);color:#fff;}
+.btn-purple{background:linear-gradient(135deg,#a29bfe,#6c5ce7);color:#fff;}
+.btn-green{background:linear-gradient(135deg,#2ed573,#20b04a);color:#fff;}
+.btn-ghost{background:transparent;color:rgba(255,255,255,.7);border:2px solid rgba(255,255,255,.2);}
+.btn-ghost:hover{border-color:rgba(255,255,255,.5);color:#fff;}
+.btn-sm{padding:8px 20px;font-size:.8em;}
+.btn-wide{width:100%;max-width:360px;}
+
+/* ── CARDS / BOXES ───────────────────────────────────────────────────── */
+.card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:20px;padding:28px;}
+.screen-scroll{overflow-y:auto;justify-content:flex-start;padding:16px 0;}
+.setup-box{width:92%;max-width:660px;margin:auto;}
+.setup-heading{font-size:1.5em;font-weight:800;margin-bottom:5px;}
+.setup-desc{color:#666;font-size:.84em;margin-bottom:22px;line-height:1.5;}
+.section-lbl{font-size:.68em;text-transform:uppercase;letter-spacing:1.5px;color:#666;margin-bottom:10px;font-weight:700;}
+.ifield{margin-bottom:14px;}
+.ifield label{display:block;font-size:.68em;text-transform:uppercase;letter-spacing:1.5px;color:#666;margin-bottom:6px;font-weight:700;}
+.ifield input{width:100%;background:rgba(255,255,255,.06);border:1.5px solid rgba(255,255,255,.12);border-radius:10px;padding:11px 14px;color:#fff;font-size:.95em;outline:none;transition:border-color .2s;}
+.ifield input:focus{border-color:#ff6b35;}
+.ifield input::placeholder{color:#2e2e40;}
+.setup-footer{display:flex;justify-content:space-between;align-items:center;margin-top:6px;gap:10px;}
+
+/* ── LEVEL GRID ─────────────────────────────────────────────────────── */
+.lv-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:18px;}
+.lv-card{background:rgba(255,255,255,.04);border:2px solid rgba(255,255,255,.1);border-radius:12px;padding:10px 6px;cursor:pointer;text-align:center;transition:all .18s;position:relative;}
+.lv-card:hover:not(.locked){border-color:rgba(255,255,255,.3);background:rgba(255,255,255,.07);}
+.lv-card.sel{border-color:#ff6b35;background:rgba(255,107,53,.12);}
+.lv-card.locked{opacity:.3;cursor:not-allowed;}
+.lv-emoji{font-size:1.5em;margin-bottom:1px;}
+.lv-num{font-size:.62em;color:#777;font-weight:700;letter-spacing:1px;margin-bottom:2px;}
+.lv-card.sel .lv-num{color:#ff6b35;}
+.lv-name{font-size:.76em;font-weight:700;line-height:1.2;}
+.lv-slo{font-size:.6em;color:#4ecdc4;margin-top:3px;}
+.lv-lock{position:absolute;top:5px;right:6px;font-size:.65em;}
+
+/* ── TARGET ROW ─────────────────────────────────────────────────────── */
+.target-row{display:flex;gap:8px;margin-bottom:18px;}
+.target-opt{flex:1;padding:9px 4px;border:2px solid rgba(255,255,255,.12);border-radius:10px;text-align:center;cursor:pointer;font-size:.8em;font-weight:700;color:#888;transition:all .18s;}
+.target-opt.sel{border-color:#ffd700;color:#ffd700;background:rgba(255,215,0,.08);}
+.target-opt:hover:not(.sel){border-color:rgba(255,255,255,.25);color:#ccc;}
+
+/* ── HOST MODE TOGGLE ────────────────────────────────────────────────── */
+.toggle-row{display:flex;align-items:center;gap:12px;padding:12px 14px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:12px;margin-bottom:18px;cursor:pointer;}
+.toggle-box{width:42px;height:24px;border-radius:12px;background:#333;position:relative;transition:background .2s;flex-shrink:0;}
+.toggle-box.on{background:#ff6b35;}
+.toggle-knob{position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#fff;transition:left .2s;box-shadow:0 1px 4px rgba(0,0,0,.4);}
+.toggle-box.on .toggle-knob{left:21px;}
+.toggle-lbl{flex:1;}
+.toggle-lbl strong{font-size:.88em;display:block;}
+.toggle-lbl small{font-size:.72em;color:#555;}
+
+/* ── JOIN SCREEN ─────────────────────────────────────────────────────── */
+.mp-or{display:flex;align-items:center;gap:14px;margin:16px 0;color:#444;font-size:.82em;}
+.mp-or::before,.mp-or::after{content:'';flex:1;height:1px;background:#2a2a3e;}
+.join-code-row{display:flex;gap:8px;align-items:flex-end;}
+.join-code-row .ifield{flex:1;margin-bottom:0;}
+.code-input{text-transform:uppercase;letter-spacing:5px;font-size:1.3em;font-weight:800;text-align:center;}
+.error-box{background:rgba(255,71,87,.12);border:1px solid rgba(255,71,87,.3);color:#ff4757;border-radius:10px;padding:10px 14px;font-size:.84em;margin-top:10px;display:none;}
+
+/* ── LOBBY ───────────────────────────────────────────────────────────── */
+#screen-lobby{background:radial-gradient(ellipse at center,#0e1a2e 0%,#0a0a1a 70%);overflow-y:auto;padding:16px 0;}
+.lobby-box{width:92%;max-width:660px;margin:auto;}
+.rcd-label{font-size:.7em;text-transform:uppercase;letter-spacing:2px;color:#666;text-align:center;margin-bottom:6px;}
+.rcd-code{font-size:3em;font-weight:900;letter-spacing:10px;color:#ffd700;text-shadow:0 0 24px rgba(255,215,0,.4);background:rgba(255,215,0,.07);border:2px solid rgba(255,215,0,.25);border-radius:14px;padding:8px 24px;text-align:center;margin-bottom:5px;}
+.rcd-hint{font-size:.74em;color:#444;text-align:center;margin-bottom:14px;}
+.lobby-players{display:flex;flex-direction:column;gap:5px;min-height:50px;margin-bottom:16px;}
+.lp-row{display:flex;align-items:center;gap:10px;padding:8px 12px;background:rgba(255,255,255,.05);border-radius:9px;border:1px solid rgba(255,255,255,.07);animation:pIn .3s ease-out;}
+@keyframes pIn{from{opacity:0;transform:translateX(-10px)}to{opacity:1;transform:translateX(0)}}
+.lp-car{font-size:1.3em;display:inline-block;transform:scaleX(-1);}
+.lp-name{flex:1;font-weight:600;font-size:.9em;}
+.lp-badge{font-size:.62em;padding:2px 8px;border-radius:8px;background:rgba(255,107,53,.2);color:#ff6b35;font-weight:700;letter-spacing:.5px;}
+.lp-you{font-size:.62em;padding:2px 8px;border-radius:8px;background:rgba(78,205,196,.2);color:#4ecdc4;font-weight:700;}
+.waiting-msg{text-align:center;color:#444;font-size:.84em;padding:12px;}
+
+/* ── GAME SCREEN ─────────────────────────────────────────────────────── */
+#screen-game{background:#0b0b1c;justify-content:flex-start;overflow:hidden;}
+.topbar{width:100%;padding:7px 16px;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,.06);flex-shrink:0;gap:8px;}
+.topbar-left{display:flex;align-items:center;gap:6px;flex-wrap:wrap;flex:1;}
+.pill{padding:3px 10px;border-radius:20px;font-size:.7em;font-weight:700;letter-spacing:.5px;text-transform:uppercase;}
+.pill-orange{background:#ff6b35;color:#fff;}
+.pill-gold{background:rgba(255,215,0,.15);color:#ffd700;border:1px solid rgba(255,215,0,.25);}
+.pill-teal{background:rgba(78,205,196,.12);color:#4ecdc4;border:1px solid rgba(78,205,196,.2);}
+.pill-gray{background:rgba(255,255,255,.07);color:#888;border:1px solid rgba(255,255,255,.1);}
+.q-counter{font-size:.74em;color:#444;}
+.timer-wrap{display:flex;align-items:center;gap:6px;flex-shrink:0;}
+.timer-bar-outer{width:80px;height:7px;background:rgba(255,255,255,.08);border-radius:4px;overflow:hidden;}
+.timer-bar-inner{height:100%;border-radius:4px;transition:width 1s linear,background .3s;}
+.timer-txt{font-size:1.1em;font-weight:800;min-width:30px;text-align:right;color:#ff6b35;}
+
+/* ── RACE BOARD ─────────────────────────────────────────────────────── */
+.race-board{width:100%;padding:8px 14px 4px;background:rgba(0,0,0,.28);flex-shrink:0;overflow:hidden;}
+.race-board-inner{display:flex;flex-direction:column;gap:3px;}
+.rp-row{display:flex;align-items:center;gap:7px;padding:3px 0;}
+.rp-pos{font-size:.62em;font-weight:800;min-width:24px;text-align:center;color:#555;}
+.rp-pos.p1{color:#ffd700;}
+.rp-pos.p2{color:#c0c0c0;}
+.rp-pos.p3{color:#cd7f32;}
+.rp-car{font-size:1em;min-width:20px;text-align:center;}
+.rp-name{font-size:.7em;font-weight:700;min-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.rp-bar-wrap{flex:1;height:14px;background:#15152a;border-radius:5px;overflow:hidden;position:relative;border:1px solid rgba(255,255,255,.05);}
+.rp-bar-fill{height:100%;border-radius:5px;transition:width .5s cubic-bezier(.22,.61,.36,1);}
+.rp-bar-car{position:absolute;top:50%;transform:translateY(-50%) scaleX(-1);font-size:11px;transition:left .5s cubic-bezier(.22,.61,.36,1);pointer-events:none;}
+.rp-score{font-size:.7em;font-weight:700;min-width:32px;text-align:right;color:#666;}
+.rp-row.me .rp-name{color:#ffd700;}
+.rp-row.me .rp-score{color:#ffd700;}
+.rp-row.me .rp-bar-wrap{border-color:rgba(255,215,0,.3);}
+.rp-streak{font-size:.6em;min-width:18px;text-align:center;}
+
+/* ── QUESTION AREA ───────────────────────────────────────────────────── */
+.q-area{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px 16px 6px;width:100%;overflow:hidden;}
+.slo-chip{font-size:.66em;background:rgba(78,205,196,.1);color:#4ecdc4;border:1px solid rgba(78,205,196,.22);padding:3px 12px;border-radius:20px;margin-bottom:8px;letter-spacing:.3px;}
+.q-box{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);border-radius:14px;padding:14px 18px;font-size:1.06em;line-height:1.55;text-align:center;max-width:680px;width:100%;margin-bottom:12px;}
+.ans-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;width:100%;max-width:680px;}
+.ans-btn{padding:10px 12px;background:rgba(255,255,255,.04);border:1.5px solid rgba(255,255,255,.1);border-radius:10px;color:#fff;font-size:.87em;cursor:pointer;text-align:left;transition:all .15s;width:100%;display:flex;align-items:center;gap:8px;}
+.ans-btn:hover:not(:disabled){background:rgba(255,255,255,.09);border-color:rgba(255,255,255,.26);transform:translateX(2px);}
+.ans-btn:disabled{cursor:default;}
+.ans-btn.correct{background:rgba(46,213,115,.18);border-color:#2ed573;color:#2ed573;}
+.ans-btn.wrong{background:rgba(255,71,87,.18);border-color:#ff4757;color:#ff4757;}
+.ans-letter{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:rgba(255,255,255,.1);font-size:.74em;font-weight:800;flex-shrink:0;}
+.ans-btn.correct .ans-letter{background:rgba(46,213,115,.3);}
+.ans-btn.wrong .ans-letter{background:rgba(255,71,87,.3);}
+.ans-text{flex:1;line-height:1.3;}
+
+/* ── DASHBOARD (host-only) ───────────────────────────────────────────── */
+#screen-dashboard{background:#0a0a1a;justify-content:flex-start;overflow:hidden;}
+.dash-topbar{width:100%;padding:10px 20px;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,.07);flex-shrink:0;}
+.dash-title{font-size:1em;font-weight:800;color:#ffd700;letter-spacing:.5px;}
+.dash-subtitle{font-size:.75em;color:#555;margin-top:2px;}
+.dash-grid{flex:1;width:100%;padding:12px 16px;overflow-y:auto;display:flex;flex-direction:column;gap:5px;}
+.dash-row{display:flex;align-items:center;gap:10px;padding:5px 10px;background:rgba(255,255,255,.03);border-radius:9px;border:1px solid rgba(255,255,255,.06);}
+.dash-pos{font-size:.7em;font-weight:800;min-width:28px;text-align:center;color:#555;}
+.dash-pos.p1{color:#ffd700;font-size:.85em;}
+.dash-pos.p2{color:#c0c0c0;font-size:.85em;}
+.dash-pos.p3{color:#cd7f32;font-size:.85em;}
+.dash-car{font-size:1.2em;}
+.dash-name{flex:1;font-weight:600;font-size:.84em;min-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.dash-bar-wrap{flex:2;height:16px;background:#15152a;border-radius:6px;overflow:hidden;border:1px solid rgba(255,255,255,.05);}
+.dash-bar-fill{height:100%;border-radius:6px;transition:width .5s cubic-bezier(.22,.61,.36,1);}
+.dash-score{font-size:.8em;font-weight:800;min-width:44px;text-align:right;}
+.dash-streak{font-size:.65em;min-width:20px;text-align:center;}
+
+/* ── FEEDBACK TOAST ─────────────────────────────────────────────────── */
+#fb{position:fixed;top:42%;left:50%;transform:translate(-50%,-50%);font-size:2.2em;font-weight:900;pointer-events:none;opacity:0;z-index:300;text-align:center;white-space:nowrap;}
+#fb.good{animation:fbpop .9s ease-out forwards;color:#2ed573;text-shadow:0 0 28px rgba(46,213,115,.6);}
+#fb.bad{animation:fbpop .9s ease-out forwards;color:#ff4757;text-shadow:0 0 28px rgba(255,71,87,.6);}
+@keyframes fbpop{0%{opacity:0;transform:translate(-50%,-50%) scale(.3)}20%{opacity:1;transform:translate(-50%,-70%) scale(1.3)}100%{opacity:0;transform:translate(-50%,-120%) scale(1)}}
+
+/* ── WINNER OVERLAY ─────────────────────────────────────────────────── */
+#winner-overlay{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:400;display:none;flex-direction:column;align-items:center;justify-content:center;animation:fadeIn .4s ease-out;}
+#winner-overlay.active{display:flex;}
+.winner-inner{text-align:center;padding:30px;}
+.winner-trophy{font-size:5em;animation:tspin 1.2s ease-in-out infinite alternate;margin-bottom:10px;}
+@keyframes tspin{from{transform:rotate(-8deg) scale(1)}to{transform:rotate(8deg) scale(1.12)}}
+.winner-title{font-size:.88em;text-transform:uppercase;letter-spacing:4px;color:#777;margin-bottom:8px;}
+.winner-name{font-size:3em;font-weight:900;color:#ffd700;text-shadow:0 0 30px rgba(255,215,0,.5);margin-bottom:6px;}
+.winner-sub{font-size:.9em;color:#666;margin-bottom:24px;}
+
+/* ── RESULTS ─────────────────────────────────────────────────────────── */
+#screen-results{background:radial-gradient(ellipse at center,#1a1a3e 0%,#0a0a1a 70%);overflow-y:auto;justify-content:flex-start;padding:16px 0;}
+.confetti-canvas{position:fixed;top:0;left:0;width:100vw;height:100vh;pointer-events:none;z-index:1;}
+.results-inner{display:flex;flex-direction:column;align-items:center;z-index:10;padding:20px;text-align:center;width:100%;max-width:560px;margin:auto;}
+.r-trophy{font-size:4em;animation:tspin 1.3s ease-in-out infinite alternate;margin-bottom:8px;}
+.r-label{font-size:.84em;text-transform:uppercase;letter-spacing:3px;color:#666;margin-bottom:3px;}
+.r-name{font-size:2.3em;font-weight:900;color:#ffd700;text-shadow:0 0 28px rgba(255,215,0,.45);margin-bottom:3px;}
+.r-msg{font-size:.86em;color:#666;margin-bottom:16px;}
+.podium-wrap{display:flex;align-items:flex-end;justify-content:center;gap:8px;margin-bottom:20px;width:100%;max-width:420px;}
+.podium-block{display:flex;flex-direction:column;align-items:center;flex:1;}
+.podium-car{font-size:1.8em;margin-bottom:4px;display:inline-block;transform:scaleX(-1);}
+.podium-pname{font-size:.74em;font-weight:700;margin-bottom:5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:90px;}
+.podium-bar{width:100%;border-radius:8px 8px 0 0;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding-bottom:6px;}
+.podium-bar.p1{height:80px;background:linear-gradient(180deg,rgba(255,215,0,.3),rgba(255,215,0,.1));border:1px solid rgba(255,215,0,.3);}
+.podium-bar.p2{height:58px;background:linear-gradient(180deg,rgba(192,192,192,.25),rgba(192,192,192,.08));border:1px solid rgba(192,192,192,.25);}
+.podium-bar.p3{height:44px;background:linear-gradient(180deg,rgba(205,127,50,.25),rgba(205,127,50,.08));border:1px solid rgba(205,127,50,.2);}
+.podium-medal{font-size:1.3em;}
+.lb-section{width:100%;max-width:460px;margin-bottom:16px;}
+.lb-row{display:flex;align-items:center;gap:10px;padding:9px 14px;border-radius:10px;margin-bottom:5px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);}
+.lb-row.r1{background:rgba(255,215,0,.1);border-color:rgba(255,215,0,.25);}
+.lb-row.r2{background:rgba(192,192,192,.08);border-color:rgba(192,192,192,.2);}
+.lb-row.r3{background:rgba(205,127,50,.08);border-color:rgba(205,127,50,.18);}
+.lb-pos{font-size:.75em;font-weight:800;min-width:22px;text-align:center;color:#555;}
+.lb-pos.p1{color:#ffd700;font-size:.9em;}
+.lb-pos.p2{color:#c0c0c0;font-size:.9em;}
+.lb-pos.p3{color:#cd7f32;font-size:.9em;}
+.lb-car{font-size:1.1em;min-width:22px;display:inline-block;transform:scaleX(-1);}
+.lb-name{flex:1;font-weight:700;text-align:left;font-size:.88em;}
+.lb-score{font-size:1.2em;font-weight:900;}
+.lb-pct{font-size:.65em;color:#555;margin-top:1px;}
+.unlock-msg{background:rgba(255,215,0,.08);border:1px solid rgba(255,215,0,.25);border-radius:10px;padding:10px 16px;color:#ffd700;font-size:.84em;margin-bottom:12px;display:none;}
+.r-btns{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;}
+
+/* ── PARTICLES ───────────────────────────────────────────────────────── */
+.particle{position:fixed;pointer-events:none;z-index:250;border-radius:50%;animation:particleFly var(--dur) ease-out forwards;}
+@keyframes particleFly{0%{opacity:1;transform:translate(0,0) scale(1);}100%{opacity:0;transform:translate(var(--tx),var(--ty)) scale(0);}}
+
+@media(max-width:580px){
+  .home-title{font-size:2.5em;}
+  .ans-grid{grid-template-columns:1fr;}
+  .q-box{font-size:.92em;}
+  .rp-name{min-width:60px;}
+}
+</style>
+</head>
+<body>
+
+<!-- HOME -->
+<div id="screen-home" class="screen active">
+  <div style="display:flex;flex-direction:column;align-items:center;z-index:10;padding:20px;padding-bottom:100px">
+    <div class="home-title">⚡ Physics Racer</div>
+    <div class="home-sub">On the Move &mdash; SLO Challenge</div>
+    <div class="home-btns">
+      <button class="btn btn-orange btn-wide" onclick="show('screen-solo-setup')">🏎️ &nbsp;Solo Race</button>
+      <button class="btn btn-purple btn-wide" onclick="show('screen-host-setup')">👑 &nbsp;Host a Game</button>
+      <button class="btn btn-teal btn-wide" onclick="show('screen-join')">🌐 &nbsp;Join a Room</button>
+    </div>
+  </div>
+  <div class="home-road">
+    <div class="road-dashes"></div>
+    <div class="home-car" style="font-size:28px;animation-delay:0s;top:26%">🏎️</div>
+    <div class="home-car" style="font-size:22px;animation-delay:1.8s;top:56%">🚗</div>
+    <div class="home-car" style="font-size:24px;animation-delay:3.3s;top:38%">🚙</div>
+  </div>
+</div>
+
+<!-- SOLO SETUP -->
+<div id="screen-solo-setup" class="screen screen-scroll">
+  <div class="card setup-box">
+    <div class="setup-heading">🏎️ Solo Race</div>
+    <div class="setup-desc">Race solo through the SLOs. Score 70%+ to unlock the next level!</div>
+    <div class="ifield">
+      <label>Your Name</label>
+      <input type="text" id="solo-name" placeholder="Enter your name" maxlength="18" autocomplete="off">
+    </div>
+    <div class="section-lbl">Select Level</div>
+    <div class="lv-grid" id="solo-lv-grid"></div>
+    <div class="setup-footer">
+      <button class="btn btn-ghost btn-sm" onclick="show('screen-home')">← Back</button>
+      <button class="btn btn-orange" onclick="startSolo()">Start Race! 🏁</button>
+    </div>
+  </div>
+</div>
+
+<!-- HOST SETUP -->
+<div id="screen-host-setup" class="screen screen-scroll">
+  <div class="card setup-box">
+    <div class="setup-heading">👑 Host a Game</div>
+    <div class="setup-desc">Create a room. Share the code with students — everyone races simultaneously with different questions!</div>
+    <div class="ifield">
+      <label>Your Name</label>
+      <input type="text" id="host-name" placeholder="Enter your name" maxlength="18" autocomplete="off">
+    </div>
+    <div class="section-lbl">Select Level</div>
+    <div class="lv-grid" id="host-lv-grid"></div>
+    <div class="section-lbl">First to how many correct wins?</div>
+    <div class="target-row" id="target-row">
+      <div class="target-opt" data-t="5">5 ⚡</div>
+      <div class="target-opt sel" data-t="10">10 🏁</div>
+      <div class="target-opt" data-t="15">15 🏆</div>
+      <div class="target-opt" data-t="20">20 💪</div>
+    </div>
+    <div class="toggle-row" id="host-play-toggle" onclick="toggleHostPlay()">
+      <div class="toggle-box on" id="host-play-box"><div class="toggle-knob"></div></div>
+      <div class="toggle-lbl">
+        <strong>I'll play too</strong>
+        <small>Turn OFF to just observe/host from a dashboard without answering questions</small>
+      </div>
+    </div>
+    <div class="setup-footer">
+      <button class="btn btn-ghost btn-sm" onclick="show('screen-home')">← Back</button>
+      <button class="btn btn-purple" onclick="createRoom()">Create Room →</button>
+    </div>
+    <div class="error-box" id="host-error"></div>
+  </div>
+</div>
+
+<!-- JOIN SCREEN -->
+<div id="screen-join" class="screen screen-scroll">
+  <div class="card setup-box">
+    <div class="setup-heading">🌐 Join a Room</div>
+    <div class="setup-desc">Enter your name and the room code your teacher displays on the board.</div>
+    <div class="ifield">
+      <label>Your Name</label>
+      <input type="text" id="join-name" placeholder="Enter your name" maxlength="18" autocomplete="off">
+    </div>
+    <div class="ifield">
+      <label>Room Code</label>
+      <input type="text" id="join-code" class="code-input" placeholder="XXXX" maxlength="4" autocomplete="off" oninput="this.value=this.value.toUpperCase()">
+    </div>
+    <div class="error-box" id="join-error"></div>
+    <div class="setup-footer">
+      <button class="btn btn-ghost btn-sm" onclick="show('screen-home')">← Back</button>
+      <button class="btn btn-teal" onclick="joinRoom()">Join →</button>
+    </div>
+  </div>
+</div>
+
+<!-- LOBBY -->
+<div id="screen-lobby" class="screen">
+  <div class="card lobby-box">
+    <div class="rcd-label">Room Code — share this with your class</div>
+    <div class="rcd-code" id="lobby-code">????</div>
+    <div id="server-url-hint" style="text-align:center;margin-bottom:14px">
+      <div style="font-size:.68em;color:#555;margin-bottom:4px">Students go to this address in their browser:</div>
+      <div id="lobby-url" style="font-size:.88em;font-weight:700;color:#4ecdc4;background:rgba(78,205,196,.08);border:1px solid rgba(78,205,196,.2);border-radius:8px;padding:5px 14px;display:inline-block;letter-spacing:.5px">Loading...</div>
+    </div>
+    <div class="section-lbl">Players in Room (<span id="lobby-count">0</span>)</div>
+    <div class="lobby-players" id="lobby-players"></div>
+    <div id="host-start-area" style="display:none">
+      <div class="section-lbl" style="margin-top:4px">Level to play</div>
+      <div class="lv-grid" id="lobby-lv-grid" style="margin-bottom:12px"></div>
+      <button class="btn btn-orange" style="width:100%;margin-bottom:8px" onclick="startMultiGame()">🏁 Start the Race!</button>
+    </div>
+    <div id="guest-wait" style="display:none">
+      <div class="waiting-msg">⏳ Waiting for the host to start the race...</div>
+    </div>
+    <div style="margin-top:12px;text-align:center">
+      <button class="btn btn-ghost btn-sm" onclick="leaveRoom()">Leave Room</button>
+    </div>
+  </div>
+</div>
+
+<!-- GAME SCREEN -->
+<div id="screen-game" class="screen">
+  <div class="topbar">
+    <div class="topbar-left">
+      <span class="pill pill-orange" id="g-lv">Level 1</span>
+      <span class="pill pill-gold" id="g-room" style="display:none"></span>
+      <span class="pill pill-teal" id="g-info" style="display:none">First to 10 correct wins!</span>
+      <span class="q-counter" id="g-qc"></span>
+    </div>
+    <div class="timer-wrap">
+      <div class="timer-bar-outer"><div class="timer-bar-inner" id="t-bar" style="width:100%;background:#ff6b35"></div></div>
+      <div class="timer-txt" id="t-txt">20</div>
+    </div>
+  </div>
+  <div class="race-board" id="race-board">
+    <div class="race-board-inner" id="race-board-inner"></div>
+  </div>
+  <div class="q-area">
+    <div class="slo-chip" id="g-slo">SLO #1</div>
+    <div class="q-box" id="g-q">Loading...</div>
+    <div class="ans-grid" id="ans-grid">
+      <button class="ans-btn" id="a0" onclick="answer(0)"><span class="ans-letter">A</span><span class="ans-text"></span></button>
+      <button class="ans-btn" id="a1" onclick="answer(1)"><span class="ans-letter">B</span><span class="ans-text"></span></button>
+      <button class="ans-btn" id="a2" onclick="answer(2)"><span class="ans-letter">C</span><span class="ans-text"></span></button>
+      <button class="ans-btn" id="a3" onclick="answer(3)"><span class="ans-letter">D</span><span class="ans-text"></span></button>
+    </div>
+  </div>
+</div>
+
+<!-- DASHBOARD (host observe-only) -->
+<div id="screen-dashboard" class="screen">
+  <div class="dash-topbar">
+    <div>
+      <div class="dash-title" id="dash-title">🏎️ Physics Racer — Live Race</div>
+      <div class="dash-subtitle" id="dash-sub">Waiting for race to start...</div>
+    </div>
+    <button class="btn btn-ghost btn-sm" onclick="leaveRoom()">End Race</button>
+  </div>
+  <div class="dash-grid" id="dash-grid"></div>
+</div>
+
+<!-- RESULTS -->
+<div id="screen-results" class="screen">
+  <canvas class="confetti-canvas" id="cc"></canvas>
+  <div class="results-inner">
+    <div class="r-trophy" id="r-trophy">🏆</div>
+    <div class="r-label" id="r-label">Race Complete!</div>
+    <div class="r-name" id="r-name">Player</div>
+    <div class="r-msg" id="r-msg"></div>
+    <div class="podium-wrap" id="podium"></div>
+    <div class="lb-section" id="leaderboard"></div>
+    <div class="unlock-msg" id="unlock-msg"></div>
+    <div class="r-btns" id="r-btns"></div>
+  </div>
+</div>
+
+<!-- WINNER OVERLAY -->
+<div id="winner-overlay">
+  <div class="winner-inner">
+    <div class="winner-trophy">🏆</div>
+    <div class="winner-title">First to finish!</div>
+    <div class="winner-name" id="wo-name">Player</div>
+    <div class="winner-sub" id="wo-sub">crossed the finish line!</div>
+  </div>
+</div>
+
+<div id="fb"></div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+// ── CONSTANTS ─────────────────────────────────────────────────────────────
+const LEVELS = [
+  {n:1,name:"Definitions",slo:"SLO #1",emoji:"📏"},
+  {n:2,name:"v = d/t",slo:"SLO #2",emoji:"🧮"},
+  {n:3,name:"Real World",slo:"SLO #3",emoji:"🏃"},
+  {n:4,name:"D-T Graphs",slo:"SLO #4-5",emoji:"📈"},
+  {n:5,name:"Acceleration",slo:"SLO #6",emoji:"🚀"},
+  {n:6,name:"S-T Graphs",slo:"SLO #7-8",emoji:"📊"},
+  {n:7,name:"Forces",slo:"SLO #9-11",emoji:"💪"},
+  {n:8,name:"F = ma",slo:"SLO #12",emoji:"⚖️"},
+  {n:9,name:"Mass & Weight",slo:"SLO #13-15",emoji:"🌍"}
+];
+const SLO_LBL = {
+  1:'SLO #1 — Definitions & Units',2:'SLO #2 — Calculating with v = d/t',
+  3:'SLO #3 — Real-World Speed',4:'SLO #4 — Distance-Time Graphs',
+  5:'SLO #5 — Interpreting D-T Graphs',6:'SLO #6 — Acceleration (a = v/t)',
+  7:'SLO #7 — Speed-Time Graphs',8:'SLO #8 — Interpreting S-T Graphs',
+  9:'SLO #9 — Forces (push/pull)',10:'SLO #10 — Force Vectors',
+  11:'SLO #11 — Balanced/Unbalanced Forces',12:'SLO #12 — F = ma',
+  13:'SLO #13 — Friction',14:'SLO #14 — Mass & Weight',
+  15:'SLO #15 — Weight in Different Gravity'
+};
+const MEDALS = ['🥇','🥈','🥉','4️⃣','5️⃣','6️⃣','7️⃣','8️⃣','9️⃣','🔟'];
+const CARS   = ['🏎️','🚗','🚙','🚕','🏍️','🛵','🚌','🚐','🚑','🚒'];
+const COLORS = ['#ff6b35','#4ecdc4','#a29bfe','#ffd700','#fd79a8','#55efc4','#74b9ff','#ff7675','#00b894','#e17055'];
+
+// ── SOLO QUESTION BANK ────────────────────────────────────────────────────
+const Q = {
+  1:[
+    {t:"What are the standard units for speed?",o:["kilometres per hour (km/h)","metres per second (m/s)","seconds (s)","metres (m)"],c:1,s:1},
+    {t:"What are the standard units for distance?",o:["seconds (s)","m/s","metres (m)","km/h"],c:2,s:1},
+    {t:"What are the standard units for time?",o:["metres (m)","m/s","km/h","seconds (s)"],c:3,s:1},
+    {t:"In the formula v = d/t, what does 'v' represent?",o:["Volume","Distance","Time","Speed (velocity)"],c:3,s:1},
+    {t:"In the formula v = d/t, what does 'd' represent?",o:["Direction","Speed","Distance","Density"],c:2,s:1},
+    {t:"Speed is calculated by...",o:["Multiplying distance by time","Adding distance and time","Subtracting time from distance","Dividing distance by time"],c:3,s:1},
+    {t:"Which of these is a measurement of speed?",o:["15 metres","15 seconds","15 newtons","15 m/s"],c:3,s:1},
+    {t:"An object NOT moving has a speed of...",o:["Unknown","10 m/s","1 m/s","0 m/s"],c:3,s:1},
+    {t:"The formula v = d/t is used to calculate...",o:["Acceleration","Force","Weight","Speed"],c:3,s:1},
+    {t:"Which is the SI unit symbol for seconds?",o:["sec","S","s","ss"],c:2,s:1},
+    {t:"How fast something moves is called its...",o:["Mass","Speed","Force","Length"],c:1,s:1},
+    {t:"Which quantity is measured in metres?",o:["Time","Speed","Distance","Force"],c:2,s:1},
+    {t:"The 'v' in v = d/t stands for velocity, which means...",o:["Voltage","Volume","Volcano","Speed in a direction"],c:3,s:1},
+    {t:"Which unit makes sense for the speed of a car?",o:["m only","s only","m/s","kg"],c:2,s:1},
+    {t:"A stopwatch measures...",o:["distance","time","speed","weight"],c:1,s:1}
+  ],
+  2:[
+    {t:"A car travels 100 m in 10 s. What is its speed?",o:["1 m/s","110 m/s","10 m/s","1000 m/s"],c:2,s:2},
+    {t:"A runner travels 200 m in 40 s. What is their speed?",o:["8 m/s","5 m/s","160 m/s","240 m/s"],c:1,s:2},
+    {t:"A cyclist rides at 6 m/s for 30 s. How far?",o:["5 m","36 m","360 m","180 m"],c:3,s:2},
+    {t:"A ball travels 50 m at 10 m/s. How long?",o:["500 s","0.2 s","40 s","5 s"],c:3,s:2},
+    {t:"A train travels 500 m in 25 s. What is its speed?",o:["475 m/s","2 m/s","525 m/s","20 m/s"],c:3,s:2},
+    {t:"A swimmer moves at 2 m/s for 60 s. How far?",o:["30 m","58 m","62 m","120 m"],c:3,s:2},
+    {t:"A student walks 80 m in 40 s. What is their speed?",o:["0.5 m/s","120 m/s","3200 m/s","2 m/s"],c:3,s:2},
+    {t:"A car travels at 25 m/s for 12 s. How far?",o:["2.08 m","37 m","13 m","300 m"],c:3,s:2},
+    {t:"To find speed, you do...",o:["d × t","d + t","d / t","d − t"],c:2,s:2},
+    {t:"To find distance (rearranging v = d/t), you do...",o:["v / t","v × t","v + t","v − t"],c:1,s:2},
+    {t:"To find time (rearranging v = d/t), you do...",o:["d × v","d + v","d / v","d − v"],c:2,s:2},
+    {t:"A car covers 60 m in 6 s. Its speed is...",o:["6 m/s","10 m/s","360 m/s","66 m/s"],c:1,s:2},
+    {t:"A horse runs at 12 m/s for 5 s. Distance?",o:["2.4 m","17 m","7 m","60 m"],c:3,s:2},
+    {t:"At 8 m/s, how long to cover 64 m?",o:["72 s","56 s","8 s","512 s"],c:2,s:2},
+    {t:"A car drives 250 m in 10 s. Speed?",o:["2.5 m/s","25 m/s","250 m/s","260 m/s"],c:1,s:2}
+  ],
+  3:[
+    {t:"A sprinter runs 100 m in 10 s. Average speed?",o:["90 m/s","1000 m/s","0.1 m/s","10 m/s"],c:3,s:3},
+    {t:"A car travels 2400 m in 120 s. Speed in m/s?",o:["1200 m/s","2 m/s","0.05 m/s","20 m/s"],c:3,s:3},
+    {t:"A cheetah runs at 30 m/s for 5 s. Distance?",o:["6 m","35 m","25 m","150 m"],c:3,s:3},
+    {t:"A bus takes 180 s to travel 900 m. Speed in m/s?",o:["3 m/s","300 m/s","0.2 m/s","5 m/s"],c:3,s:3},
+    {t:"A cyclist covers 1500 m at 10 m/s. How many seconds?",o:["15000 s","1490 s","1510 s","150 s"],c:3,s:3},
+    {t:"A swimmer finishes 200 m in 150 s. Avg speed?",o:["75 m/s","4 m/s","0.75 m/s","1.33 m/s"],c:3,s:3},
+    {t:"A toy car travels 3 m in 0.5 s. What is its speed?",o:["1.5 m/s","3.5 m/s","0.17 m/s","6 m/s"],c:3,s:3},
+    {t:"Runner A: 500 m in 50 s. Runner B: 400 m in 45 s. Faster?",o:["They are equal","Runner B","Cannot tell","Runner A"],c:3,s:3},
+    {t:"A jet flies 4000 m in 20 s. Speed?",o:["200 m/s","2 m/s","20 m/s","80 m/s"],c:0,s:3},
+    {t:"A snail moves 0.6 m in 60 s. Speed?",o:["10 m/s","36 m/s","0.01 m/s","0.6 m/s"],c:2,s:3},
+    {t:"A walker covers 1200 m in 600 s. Speed?",o:["2 m/s","0.5 m/s","720 m/s","720000 m/s"],c:0,s:3},
+    {t:"A scooter at 5 m/s rides for 120 s. Distance?",o:["240 m","600 m","60 m","2.4 m"],c:1,s:3},
+    {t:"A car at 25 m/s — how long to travel 500 m?",o:["12500 s","525 s","20 s","2 s"],c:2,s:3},
+    {t:"A runner does 1500 m in 300 s. Average speed?",o:["3 m/s","5 m/s","0.2 m/s","7500 m/s"],c:1,s:3},
+    {t:"A train at 30 m/s — how far in 90 s?",o:["3 m","2700 m","120 m","0.33 m"],c:1,s:3}
+  ],
+  4:[
+    {t:"On a d-t graph, a horizontal (flat) line means the object is...",o:["accelerating","slowing down","stationary (not moving)","speeding up"],c:2,s:4},
+    {t:"On a d-t graph, a straight diagonal line going up means...",o:["the object is stopped","constant speed","the object is accelerating","going backwards"],c:1,s:4},
+    {t:"What does the gradient of a d-t graph represent?",o:["acceleration","force","time","speed"],c:3,s:4},
+    {t:"What is plotted on the y-axis of a d-t graph?",o:["speed","time","distance","force"],c:2,s:4},
+    {t:"What is plotted on the x-axis of a d-t graph?",o:["distance","time","speed","mass"],c:1,s:4},
+    {t:"A curve on a d-t graph that gets steeper shows...",o:["constant speed","deceleration","stationary","acceleration"],c:3,s:4},
+    {t:"A curve on a d-t graph that gets less steep shows...",o:["acceleration","constant speed","deceleration","reversing"],c:2,s:4},
+    {t:"On a d-t graph, the steeper the line, the...",o:["slower","faster","heavier","further away"],c:1,s:4},
+    {t:"To find speed from a d-t graph, calculate the...",o:["area under the line","gradient of the line","y-intercept","total time"],c:1,s:4},
+    {t:"A flat line at d = 5 m means the object is...",o:["5 m away and stationary","moving at 5 m/s","accelerating","at the start"],c:0,s:4},
+    {t:"On a d-t graph, a line going DOWN means the object is...",o:["speeding up","stationary","moving back towards the start","not moving"],c:2,s:4},
+    {t:"Two cars: line A steep, line B shallow. A is _____ than B.",o:["slower","faster","stopped","heavier"],c:1,s:4},
+    {t:"A horizontal line at distance = 0 means...",o:["at the start, not moving","moving fast","accelerating","at the finish line"],c:0,s:4},
+    {t:"A d-t graph shows distance increasing slowly, then fast. The object is...",o:["decelerating","staying still","accelerating","stopped"],c:2,s:4},
+    {t:"Why do we draw a line of best fit?",o:["to look pretty","to show the overall trend","to hide bad data","to fill the page"],c:1,s:4}
+  ],
+  5:[
+    {t:"What is the formula for acceleration (from rest)?",o:["a = v × t","a = v + t","a = v − t","a = v / t"],c:3,s:6},
+    {t:"What are the units for acceleration?",o:["m/s","m","s","m/s²"],c:3,s:6},
+    {t:"Acceleration measures how quickly...",o:["mass changes","speed changes","force changes","distance changes"],c:1,s:6},
+    {t:"A car speeds up from 0 to 20 m/s in 5 s. Acceleration?",o:["100 m/s²","0.25 m/s²","4 m/s²","25 m/s²"],c:2,s:6},
+    {t:"A bike speeds up from 0 to 8 m/s in 4 s. Acceleration?",o:["32 m/s²","0.5 m/s²","2 m/s²","12 m/s²"],c:2,s:6},
+    {t:"A car at constant speed has acceleration of...",o:["0 m/s²","1 m/s²","constant","10 m/s²"],c:0,s:6},
+    {t:"A rocket: 0 to 30 m/s in 6 s. Acceleration?",o:["180 m/s²","0.2 m/s²","36 m/s²","5 m/s²"],c:3,s:6},
+    {t:"Slowing down is called...",o:["acceleration","constant speed","deceleration","stopping"],c:2,s:6},
+    {t:"What is the symbol used for acceleration?",o:["v","d","a","s"],c:2,s:6},
+    {t:"A car goes from 0 to 50 m/s in 10 s. Acceleration?",o:["500 m/s²","60 m/s²","5 m/s²","0.2 m/s²"],c:2,s:6},
+    {t:"Acceleration is calculated by dividing...",o:["distance by time","force by mass","velocity by time","mass by time"],c:2,s:6},
+    {t:"From rest to 16 m/s in 4 s. Acceleration?",o:["64 m/s²","12 m/s²","4 m/s²","20 m/s²"],c:2,s:6},
+    {t:"Which has the biggest acceleration?",o:["0→10 m/s in 5 s","0→20 m/s in 5 s","0→10 m/s in 2 s","0→4 m/s in 4 s"],c:2,s:6},
+    {t:"A drone reaches 24 m/s after 6 s. Acceleration?",o:["144 m/s²","18 m/s²","4 m/s²","30 m/s²"],c:2,s:6},
+    {t:"An object reaches 12 m/s after 3 s from rest. Acceleration?",o:["36 m/s²","0.25 m/s²","9 m/s²","4 m/s²"],c:3,s:6}
+  ],
+  6:[
+    {t:"On a speed-time graph, a horizontal flat line means...",o:["accelerating","constant speed","stopped","deceleration"],c:1,s:8},
+    {t:"On a speed-time graph, a line sloping up means...",o:["constant speed","deceleration","stopped","acceleration"],c:3,s:8},
+    {t:"On a speed-time graph, a line sloping down means...",o:["constant speed","acceleration","deceleration","reversing"],c:2,s:8},
+    {t:"What does the gradient of a speed-time graph represent?",o:["distance","time","speed","acceleration"],c:3,s:8},
+    {t:"A speed-time line flat at y = 0 means the object is...",o:["moving fast","stationary","accelerating","at constant speed"],c:1,s:8},
+    {t:"What is plotted on the y-axis of a speed-time graph?",o:["distance","speed","time","force"],c:1,s:8},
+    {t:"The area under a speed-time graph represents...",o:["acceleration","force","time","distance travelled"],c:3,s:8},
+    {t:"A horizontal line at speed = 15 m/s means the object...",o:["accelerates at 15 m/s²","moves 15 m","moves at 15 m/s constantly","stops at 15 s"],c:2,s:8},
+    {t:"A steeper upward slope on an s-t graph means...",o:["smaller acceleration","greater acceleration","constant speed","slower speed"],c:1,s:8},
+    {t:"An object with acceleration = 0 has an s-t graph that is...",o:["sloping up","sloping down","horizontal flat line","V-shaped"],c:2,s:8},
+    {t:"Two objects: A's s-t line is shallower than B's. A's acceleration is...",o:["greater than B","equal to B","less than B","zero"],c:2,s:8},
+    {t:"A bus' s-t graph: flat then slopes to 0. The bus...",o:["speeds up then stationary","constant speed then decelerates to stop","accelerates then stops suddenly","reverses"],c:1,s:8},
+    {t:"Object A: 3 m/s², Object B: 5 m/s². Steeper s-t line?",o:["A","B","Same","Neither"],c:1,s:8},
+    {t:"A line sloping steeply down on s-t graph shows...",o:["fast acceleration","fast deceleration","constant speed","stationary"],c:1,s:8},
+    {t:"What is plotted on the x-axis of a speed-time graph?",o:["distance","speed","time","mass"],c:2,s:8}
+  ],
+  7:[
+    {t:"A force is a...",o:["mass","push or pull","speed","direction"],c:1,s:9},
+    {t:"What is the unit for force?",o:["metres","kilograms","seconds","newtons"],c:3,s:9},
+    {t:"What is the symbol for newtons?",o:["n","Nw","N","nm"],c:2,s:9},
+    {t:"Weight is the force of ___ pulling on an object.",o:["wind","friction","gravity","magnetism"],c:2,s:10},
+    {t:"The upward force on a plane wing is called...",o:["thrust","lift","drag","friction"],c:1,s:10},
+    {t:"The forward force from an engine is called...",o:["lift","weight","thrust","support"],c:2,s:10},
+    {t:"The force that resists motion between surfaces is...",o:["lift","gravity","thrust","friction"],c:3,s:10},
+    {t:"The upward force from a surface is called...",o:["thrust","support (normal force)","lift","drag"],c:1,s:10},
+    {t:"When forces are equal and opposite, they are...",o:["unbalanced","balanced","accelerating","resultant"],c:1,s:11},
+    {t:"Balanced forces cause an object to...",o:["accelerate","speed up","stay still or move at constant speed","change direction"],c:2,s:11},
+    {t:"Unbalanced forces cause an object to...",o:["stay still","accelerate (change speed/direction)","never move","stop instantly"],c:1,s:11},
+    {t:"The single force replacing all forces is called the...",o:["balanced force","push force","resultant force","reaction force"],c:2,s:11},
+    {t:"A box: gravity 50 N down, floor 50 N up. Forces are...",o:["balanced","unbalanced","zero","accelerating"],c:0,s:11},
+    {t:"Car: 200 N forward, 50 N friction back. Resultant force?",o:["250 N forward","250 N back","150 N forward","150 N back"],c:2,s:11},
+    {t:"Forces are drawn on diagrams as...",o:["dots","squares","arrows (vectors)","circles"],c:2,s:10}
+  ],
+  8:[
+    {t:"In F = ma, what does 'F' stand for?",o:["friction","force","fraction","fall"],c:1,s:12},
+    {t:"In F = ma, what does 'm' stand for?",o:["motion","mass","minutes","metres"],c:1,s:12},
+    {t:"In F = ma, what does 'a' stand for?",o:["area","amount","acceleration","angle"],c:2,s:12},
+    {t:"A 2 kg object accelerates at 5 m/s². Force?",o:["2.5 N","7 N","3 N","10 N"],c:3,s:12},
+    {t:"A 10 kg object has a 50 N force. Acceleration?",o:["500 m/s²","60 m/s²","0.2 m/s²","5 m/s²"],c:3,s:12},
+    {t:"A 100 N force, acceleration 4 m/s². Mass?",o:["400 kg","96 kg","25 kg","104 kg"],c:2,s:12},
+    {t:"5 kg mass, 20 m/s² acceleration. Force?",o:["4 N","25 N","15 N","100 N"],c:3,s:12},
+    {t:"3 kg mass, 6 N force. Acceleration?",o:["18 m/s²","0.5 m/s²","9 m/s²","2 m/s²"],c:3,s:12},
+    {t:"A 40 N force on an 8 kg mass. Acceleration?",o:["320 m/s²","48 m/s²","32 m/s²","5 m/s²"],c:3,s:12},
+    {t:"12 N force, 4 m/s² acceleration. Mass?",o:["48 kg","8 kg","3 kg","16 kg"],c:2,s:12},
+    {t:"A 4 kg ball pushed with 12 N. Acceleration?",o:["48 m/s²","8 m/s²","16 m/s²","3 m/s²"],c:3,s:12},
+    {t:"200 N pushes a 50 kg trolley. Acceleration?",o:["250 m/s²","150 m/s²","4 m/s²","10000 m/s²"],c:2,s:12},
+    {t:"Doubling the force on the same mass means...",o:["acceleration stays the same","acceleration doubles","acceleration halves","mass doubles"],c:1,s:12},
+    {t:"F = ma is also known as...",o:["Newton's 1st law","Newton's 2nd law","Newton's 3rd law","Hooke's law"],c:1,s:12},
+    {t:"A 6 N force acts on a 2 kg object. Acceleration?",o:["12 m/s²","8 m/s²","4 m/s²","3 m/s²"],c:3,s:12}
+  ],
+  9:[
+    {t:"Mass is measured in...",o:["newtons (N)","metres (m)","kilograms (kg)","seconds (s)"],c:2,s:14},
+    {t:"Weight is measured in...",o:["kilograms (kg)","metres (m)","seconds (s)","newtons (N)"],c:3,s:14},
+    {t:"Mass measures how much ___ is in an object.",o:["gravity","matter","weight","force"],c:1,s:14},
+    {t:"Weight is caused by...",o:["air resistance","friction","gravity pulling down","magnetism"],c:2,s:14},
+    {t:"An astronaut on Moon vs Earth has...",o:["different mass, same weight","same mass, different weight","both the same","both different"],c:1,s:15},
+    {t:"Why does an astronaut weigh less on the Moon?",o:["no atmosphere","Moon's gravity is weaker","loses mass","it is colder"],c:1,s:15},
+    {t:"Friction is HELPFUL when...",o:["machines wear out","brakes stop a car","engines get hot","tyres get bald"],c:1,s:13},
+    {t:"Friction is UNHELPFUL when...",o:["walking on the ground","gripping a pencil","engine parts wear and lose energy","using brakes"],c:2,s:13},
+    {t:"Friction can be reduced by...",o:["adding more weight","using rougher surfaces","using oil (lubrication)","increasing speed"],c:2,s:13},
+    {t:"On Earth, gravity pulls with about how many N per kg?",o:["1 N/kg","100 N/kg","0.1 N/kg","10 N/kg"],c:3,s:15},
+    {t:"A 5 kg object on Earth weighs approximately...",o:["5 N","0.5 N","500 N","50 N"],c:3,s:15},
+    {t:"A 10 kg backpack on Earth weighs about...",o:["1 N","10 N","100 N","1000 N"],c:2,s:15},
+    {t:"Your mass on the Moon compared to Earth is...",o:["smaller","bigger","exactly the same","zero"],c:2,s:15},
+    {t:"In space far from any planet, an object's weight is...",o:["same as on Earth","much greater","zero","cannot be measured"],c:2,s:15},
+    {t:"Which is a vector quantity (has direction)?",o:["mass","time","temperature","weight"],c:3,s:14}
+  ]
+};
+
+// ── SOUND ────────────────────────────────────────────────────────────────
+let _ac = null;
+function getAC() {
+  if (!_ac) _ac = new (window.AudioContext || window.webkitAudioContext)();
+  return _ac;
+}
+function beep(freqs, dur, type='sine', gain=0.3) {
+  try {
+    const ac = getAC();
+    freqs.forEach(([f, t, g=gain]) => {
+      const o = ac.createOscillator();
+      const gn = ac.createGain();
+      o.connect(gn); gn.connect(ac.destination);
+      o.type = type; o.frequency.value = f;
+      gn.gain.setValueAtTime(g, ac.currentTime + t);
+      gn.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + t + dur);
+      o.start(ac.currentTime + t);
+      o.stop(ac.currentTime + t + dur + 0.05);
+    });
+  } catch(e){}
+}
+function sndCorrect()  { beep([[523,.0],[659,.1],[784,.2]], .18); }
+function sndWrong()    { beep([[220,.0],[180,.1]], .25, 'sawtooth', .2); }
+function sndTimeout()  { beep([[300,.0],[250,.1]], .2, 'square', .15); }
+function sndWin()      { beep([[523,.0],[659,.1],[784,.2],[1047,.35]], .3, 'sine', .4); }
+function sndTick()     { beep([[800,.0]], .05, 'square', .08); }
+
+// ── HELPERS ───────────────────────────────────────────────────────────────
+function show(id) {
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  if (id==='screen-solo-setup') buildLvGrid('solo-lv-grid', S.level, n=>{ S.level=n; }, false);
+  if (id==='screen-host-setup') buildLvGrid('host-lv-grid', M.level, n=>{ M.level=n; }, true);
+}
+function shuffle(a) {
+  const b=[...a];
+  for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]];}
+  return b;
+}
+function fbToast(txt, good) {
+  const el = document.getElementById('fb');
+  el.textContent = txt; el.className=''; void el.offsetWidth;
+  el.className = good ? 'good' : 'bad';
+}
+function posLabel(n) {
+  if(n===1) return '🥇'; if(n===2) return '🥈'; if(n===3) return '🥉';
+  return n+'th';
+}
+function posClass(n) { return n<=3?'p'+n:''; }
+function streakEmoji(s) {
+  if(s>=7) return '🔥🔥'; if(s>=5) return '🔥'; if(s>=3) return '⚡'; return '';
+}
+
+// ── PARTICLES ────────────────────────────────────────────────────────────
+function burst(x, y, color) {
+  for(let i=0; i<10; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    const size = 5 + Math.random()*6;
+    const angle = Math.random()*Math.PI*2;
+    const dist  = 40 + Math.random()*80;
+    p.style.cssText = `width:${size}px;height:${size}px;background:${color};left:${x}px;top:${y}px;--tx:${Math.cos(angle)*dist}px;--ty:${Math.sin(angle)*dist}px;--dur:${.4+Math.random()*.4}s`;
+    document.body.appendChild(p);
+    setTimeout(()=>p.remove(), 800);
+  }
+}
+
+// ── LEVEL GRID ────────────────────────────────────────────────────────────
+function buildLvGrid(cid, curLevel, onPick, allUnlocked=false) {
+  const grid = document.getElementById(cid);
+  if (!grid) return;
+  grid.innerHTML = LEVELS.map(L => {
+    const ok  = allUnlocked || S.unlocked[L.n-1];
+    const sel = L.n === curLevel;
+    return `<div class="lv-card ${sel?'sel':''} ${!ok?'locked':''}" data-lv="${L.n}">
+      <div class="lv-emoji">${L.emoji}</div>
+      <div class="lv-num">LEVEL ${L.n}</div>
+      <div class="lv-name">${L.name}</div>
+      <div class="lv-slo">${L.slo}</div>
+      ${!ok?'<div class="lv-lock">🔒</div>':''}
+    </div>`;
+  }).join('');
+  grid.querySelectorAll('.lv-card').forEach(card=>{
+    card.onclick = ()=>{
+      const n = parseInt(card.dataset.lv);
+      const isOk = allUnlocked || S.unlocked[n-1];
+      if (!isOk) return;
+      onPick(n);
+      grid.querySelectorAll('.lv-card').forEach(c=>c.classList.remove('sel'));
+      card.classList.add('sel');
+    };
+  });
+}
+
+// ── TARGET SELECTOR ────────────────────────────────────────────────────────
+document.getElementById('target-row').querySelectorAll('.target-opt').forEach(el=>{
+  el.onclick = ()=>{
+    document.querySelectorAll('.target-opt').forEach(x=>x.classList.remove('sel'));
+    el.classList.add('sel');
+    M.target = parseInt(el.dataset.t);
+  };
+});
+
+// ── HOST-PLAY TOGGLE ────────────────────────────────────────────────────────
+let _hostPlay = true;
+function toggleHostPlay() {
+  _hostPlay = !_hostPlay;
+  const box = document.getElementById('host-play-box');
+  box.classList.toggle('on', _hostPlay);
+  const lbl = box.nextElementSibling.querySelector('strong');
+  lbl.textContent = _hostPlay ? "I'll play too" : "I'll just host/observe";
+}
+
+// ── SOLO STATE ────────────────────────────────────────────────────────────
+let S = {
+  level:1, name:'', qs:[], qi:0, total:10,
+  correct:0, order:[], timerID:null, timer:20, locked:false,
+  unlocked:Array(9).fill(false)
+};
+S.unlocked[0] = true;
+
+function loadUnlocks(){
+  try {
+    const u = JSON.parse(localStorage.getItem('prU')||'null');
+    if(u && Array.isArray(u)) S.unlocked = Array(9).fill(false).map((_,i)=>i<u.length?!!u[i]:false);
+    S.unlocked[0] = true;
+  } catch(e){}
+}
+function saveUnlocks(){ localStorage.setItem('prU', JSON.stringify(S.unlocked)); }
+
+function startSolo() {
+  M.mode = 'solo';
+  if(socket){ try{socket.disconnect();}catch(e){} socket=null; }
+  S.name  = document.getElementById('solo-name').value.trim() || 'Racer';
+  S.qs    = shuffle([...Q[S.level]]).slice(0, S.total);
+  S.qi=0; S.correct=0; S.locked=false;
+  document.getElementById('g-lv').textContent    = 'Level '+S.level;
+  document.getElementById('g-room').style.display = 'none';
+  document.getElementById('g-info').style.display = 'none';
+  document.getElementById('g-qc').textContent     = '';
+  buildRaceBoard([{id:'me',name:S.name,car:CARS[0],color:COLORS[0],correct:0,streak:0}], S.total, 'me');
+  show('screen-game');
+  setTimeout(()=>{ updateRaceBoard([{id:'me',name:S.name,car:CARS[0],color:COLORS[0],correct:0,streak:0}], 'me'); soloNextQ(); }, 80);
+}
+
+function soloNextQ() {
+  clearInterval(S.timerID);
+  if (S.qi >= S.total) { soloEnd(); return; }
+  const q = S.qs[S.qi]; S.locked = false;
+  document.getElementById('g-qc').textContent = `Q ${S.qi+1} / ${S.total}`;
+  document.getElementById('g-slo').textContent = SLO_LBL[q.s] || '';
+  document.getElementById('g-q').textContent   = q.t;
+  const order = shuffle([0,1,2,3]); S.order = order;
+  ['A','B','C','D'].forEach((ltr,i)=>{
+    const b = document.getElementById('a'+i);
+    b.className='ans-btn'; b.disabled=false;
+    b.querySelector('.ans-letter').textContent = ltr;
+    b.querySelector('.ans-text').textContent   = q.o[order[i]];
+    b.dataset.ok = (order[i]===q.c)?'1':'0';
+  });
+  S.timer = 20; updTimer();
+  S.timerID = setInterval(()=>{
+    S.timer--; updTimer();
+    if(S.timer<=5) sndTick();
+    if(S.timer<=0){ clearInterval(S.timerID); soloTimeout(); }
+  }, 1000);
+}
+
+function soloTimeout(){
+  if(S.locked)return; S.locked=true;
+  revealAll(); fbToast('⏰ Time!',false); sndTimeout();
+  setTimeout(()=>{ S.qi++; soloNextQ(); }, 1700);
+}
+
+function updTimer(){
+  const pct = (S.timer/20)*100;
+  const bar = document.getElementById('t-bar');
+  const txt = document.getElementById('t-txt');
+  bar.style.width = pct+'%';
+  const col = S.timer<=5?'#ff4757':S.timer<=10?'#ffd700':'#ff6b35';
+  bar.style.background = col; txt.style.color = col;
+  txt.textContent = S.timer;
+}
+
+function answer(idx) {
+  if(M.mode==='multi'){ multiAnswer(idx); return; }
+  if(S.locked) return; S.locked=true; clearInterval(S.timerID);
+  const b  = document.getElementById('a'+idx);
+  const ok = b.dataset.ok==='1';
+  b.classList.add(ok?'correct':'wrong');
+  revealAll();
+  if(ok){
+    S.correct++;
+    updateRaceBoard([{id:'me',name:S.name,car:CARS[0],color:COLORS[0],correct:S.correct,streak:0}], 'me');
+    fbToast('✅ Correct!',true); sndCorrect();
+    const rect = b.getBoundingClientRect();
+    burst(rect.left+rect.width/2, rect.top+rect.height/2, '#2ed573');
+  } else {
+    fbToast('❌ Wrong!',false); sndWrong();
+    document.getElementById('screen-game').style.animation='shake .3s ease-out';
+    setTimeout(()=>document.getElementById('screen-game').style.animation='',300);
+  }
+  setTimeout(()=>{ S.qi++; soloNextQ(); }, 1500);
+}
+
+function revealAll(){
+  for(let i=0;i<4;i++){
+    const b=document.getElementById('a'+i); b.disabled=true;
+    if(b.dataset.ok==='1'&&!b.classList.contains('correct')&&!b.classList.contains('wrong'))
+      b.classList.add('correct');
+  }
+}
+
+function soloEnd(){
+  clearInterval(S.timerID);
+  const pct = Math.round(S.correct/S.total*100);
+  let trophy, msg;
+  if(pct>=90){ trophy='🏆'; msg='PERFECT! Physics master! 🔥'; }
+  else if(pct>=70){ trophy='🥇'; msg=pct+'% — Awesome work! Level unlocked!'; }
+  else if(pct>=50){ trophy='🥈'; msg=pct+'% — Good effort! Try again to improve.'; }
+  else { trophy='🚗'; msg=pct+"% — Keep practising, you've got this!"; }
+  document.getElementById('r-trophy').textContent = trophy;
+  document.getElementById('r-label').textContent  = 'Solo Race Complete!';
+  document.getElementById('r-name').textContent   = S.name;
+  document.getElementById('r-msg').textContent    = msg;
+  document.getElementById('podium').innerHTML     = '';
+  document.getElementById('leaderboard').innerHTML = `
+    <div class="lb-row r1">
+      <div class="lb-pos p1">🥇</div>
+      <div class="lb-car">${CARS[0]}</div>
+      <div class="lb-name">${S.name}</div>
+      <div style="text-align:right">
+        <div class="lb-score" style="color:${COLORS[0]}">${S.correct}/${S.total}</div>
+        <div class="lb-pct">${pct}%</div>
+      </div>
+    </div>`;
+  const ul = document.getElementById('unlock-msg');
+  ul.style.display = 'none';
+  if(pct>=70 && S.level<9 && !S.unlocked[S.level]){
+    S.unlocked[S.level]=true; saveUnlocks();
+    ul.textContent = '🔓 Level '+(S.level+1)+' Unlocked: '+LEVELS[S.level].name+'!';
+    ul.style.display = 'block';
+  }
+  document.getElementById('r-btns').innerHTML = `
+    <button class="btn btn-orange" onclick="startSolo()">Play Again</button>
+    <button class="btn btn-teal" onclick="show('screen-solo-setup')">Change Level</button>
+    <button class="btn btn-ghost" onclick="show('screen-home')">Home</button>`;
+  show('screen-results');
+  if(pct>=70){ sndWin(); setTimeout(confetti,300); }
+}
+
+// ── RACE BOARD ────────────────────────────────────────────────────────────
+function buildRaceBoard(players, target, myId) {
+  const inner = document.getElementById('race-board-inner');
+  inner.innerHTML = '';
+  const maxRows = Math.min(players.length, 10);
+  players.slice(0, maxRows).forEach((p, i)=>{
+    const pos = i+1;
+    const row = document.createElement('div');
+    row.className = 'rp-row'+(p.id===myId?' me':'');
+    row.id = 'rp-'+p.id.replace(/[^a-z0-9]/gi,'_');
+    row.innerHTML = `
+      <div class="rp-pos ${posClass(pos)}">${posLabel(pos)}</div>
+      <div class="rp-name" style="color:${p.color}">${p.car} ${p.name}</div>
+      <div class="rp-bar-wrap" style="${p.id===myId?'border-color:rgba(255,215,0,.35)':''}">
+        <div class="rp-bar-fill" id="rpf-${p.id.replace(/[^a-z0-9]/gi,'_')}" style="width:0%;background:${p.color}"></div>
+      </div>
+      <div class="rp-score" id="rps-${p.id.replace(/[^a-z0-9]/gi,'_')}">0/${target}</div>
+      <div class="rp-streak" id="rpst-${p.id.replace(/[^a-z0-9]/gi,'_')}"></div>`;
+    inner.appendChild(row);
+  });
+  if(players.length>10){
+    const more = document.createElement('div');
+    more.style.cssText='font-size:.65em;color:#444;text-align:center;padding:2px 0';
+    more.id = 'rp-more';
+    more.textContent = `+${players.length-10} more players`;
+    inner.appendChild(more);
+  }
+}
+
+function updateRaceBoard(players, myId) {
+  const sorted = [...players].sort((a,b)=>b.correct-a.correct);
+  const target = M.mode==='multi' ? M.target : S.total;
+  const inner  = document.getElementById('race-board-inner');
+  if(!inner) return;
+  const maxRows = Math.min(sorted.length, 10);
+  let myPos = sorted.findIndex(p=>p.id===myId)+1;
+  sorted.slice(0, maxRows).forEach((p, i)=>{
+    const pos = i+1;
+    const sid = p.id.replace(/[^a-z0-9]/gi,'_');
+    let row = document.getElementById('rp-'+sid);
+    if(!row) { buildRaceBoard(sorted, target, myId); return; }
+    row.className = 'rp-row'+(p.id===myId?' me':'');
+    const posEl = row.querySelector('.rp-pos');
+    if(posEl){ posEl.className='rp-pos '+posClass(pos); posEl.textContent=posLabel(pos); }
+    const fill = document.getElementById('rpf-'+sid);
+    if(fill) fill.style.width = Math.round((p.correct/target)*100)+'%';
+    const score = document.getElementById('rps-'+sid);
+    if(score){ score.textContent = p.correct+'/'+target; }
+    const streak = document.getElementById('rpst-'+sid);
+    if(streak) streak.textContent = streakEmoji(p.streak||0);
+  });
+  if(myPos>10){
+    const me = sorted[myPos-1];
+    let moreEl = document.getElementById('rp-more');
+    if(moreEl) moreEl.textContent = `You are ${myPos}${myPos===11?'th':myPos===12?'th':myPos===13?'th':['th','st','nd','rd','th'][Math.min(myPos%10,4)]} place`;
+  }
+}
+
+// ── MULTIPLAYER STATE ──────────────────────────────────────────────────────
+let socket = null;
+let M = { mode:'solo', isHost:false, roomCode:'', players:[], myId:'', target:10, level:1, lastAns:-1 };
+const SOCKET_OK = typeof io !== 'undefined';
+
+// ── SOCKET ────────────────────────────────────────────────────────────────
+function initSocket(){
+  if(socket) return;
+  socket = io({ autoConnect:false });
+
+  socket.on('room-ready',({code,isHost,players})=>{
+    M.roomCode=code; M.isHost=isHost; M.players=players; M.myId=socket.id;
+    buildLobby(players, isHost, code);
+    show('screen-lobby'); hideErr('join'); hideErr('host');
+  });
+
+  socket.on('lobby-update',({players,host})=>{
+    M.players=players; M.isHost=(socket.id===host);
+    buildLobby(players, M.isHost, M.roomCode);
+  });
+
+  socket.on('room-error', msg=>{
+    showErr('join', msg); showErr('host', msg);
+  });
+
+  socket.on('game-started',({level,target,hostPlay,players})=>{
+    M.mode='multi'; M.target=target||10; M.level=level;
+    M.players=players; M.lastAns=-1;
+    const me = players.find(p=>p.id===socket.id);
+    if(me && me.isObserver){
+      buildDashboard(players, target);
+      document.getElementById('dash-title').textContent = '🏎️ Physics Racer — Live Race';
+      document.getElementById('dash-sub').textContent   = `Level ${level} — First to ${target} correct wins!`;
+      show('screen-dashboard');
+    } else {
+      document.getElementById('g-lv').textContent     = 'Level '+level;
+      document.getElementById('g-room').textContent   = M.roomCode;
+      document.getElementById('g-room').style.display = 'inline';
+      document.getElementById('g-info').textContent   = `First to ${target} correct wins!`;
+      document.getElementById('g-info').style.display = 'inline';
+      buildRaceBoard(players, target, socket.id);
+      show('screen-game');
+    }
+  });
+
+  socket.on('your-question',({text,options,sloLabel,timeLimit,progress,target})=>{
+    if(target) M.target=target;
+    M.lastAns=-1;
+    showMultiQuestion(text, options, sloLabel, timeLimit||20);
+    updateRaceBoard(M.players, socket.id);
+  });
+
+  socket.on('answer-feedback',({correct,correctIdx,streak})=>{
+    const b = document.getElementById('a'+M.lastAns);
+    if(b) b.classList.add(correct?'correct':'wrong');
+    const cb = document.getElementById('a'+correctIdx);
+    if(cb&&!cb.classList.contains('correct')&&!cb.classList.contains('wrong')) cb.classList.add('correct');
+    if(correct){ sndCorrect(); fbToast('✅ Correct!',true);
+      if(b){ const r=b.getBoundingClientRect(); burst(r.left+r.width/2,r.top+r.height/2,'#2ed573'); }
+    } else { sndWrong(); fbToast('❌ Wrong!',false); }
+  });
+
+  socket.on('scores',({players})=>{
+    M.players=players;
+    updateRaceBoard(players, socket.id);
+    updateDashboard(players);
+  });
+
+  socket.on('time-up',()=>{
+    clearInterval(S.timerID);
+    for(let i=0;i<4;i++) document.getElementById('a'+i).disabled=true;
+    fbToast('⏰ Time!',false); sndTimeout();
+  });
+
+  socket.on('game-over',({players,winnerId})=>{
+    clearInterval(S.timerID);
+    const winner = players.find(p=>p.id===winnerId) || players[0];
+    showWinnerOverlay(winner.name, winner.car);
+    sndWin(); setTimeout(confetti, 400);
+    setTimeout(()=>{
+      hideWinnerOverlay();
+      showMultiResults(players, winnerId);
+    }, 3500);
+  });
+
+  socket.on('disconnect',()=>{
+    if(M.mode==='multi'){ M.mode='solo'; alert('Lost connection to the server.'); show('screen-home'); }
+  });
+}
+
+function connectThen(fn){
+  initSocket();
+  if(socket.connected){ fn(); }
+  else { socket.connect(); socket.once('connect',()=>{ M.myId=socket.id; fn(); }); }
+}
+
+function createRoom(){
+  if(!SOCKET_OK){ alert('Server not found.\n\nRun START-SERVER.bat first.'); return; }
+  const name = document.getElementById('host-name').value.trim();
+  if(!name){ showErr('host','Please enter your name first!'); return; }
+  hideErr('host');
+  connectThen(()=>socket.emit('create-room',{name}));
+}
+
+function joinRoom(){
+  if(!SOCKET_OK){ alert('Server not found.\n\nRun START-SERVER.bat first.'); return; }
+  const name = document.getElementById('join-name').value.trim();
+  const code = document.getElementById('join-code').value.trim().toUpperCase();
+  if(!name){ showErr('join','Please enter your name!'); return; }
+  if(code.length!==4){ showErr('join','Room code must be 4 characters.'); return; }
+  hideErr('join');
+  connectThen(()=>socket.emit('join-room',{name,code}));
+}
+
+function buildLobby(players, isHost, code){
+  document.getElementById('lobby-code').textContent  = code;
+  document.getElementById('lobby-count').textContent = players.length;
+  document.getElementById('lobby-players').innerHTML = players.map(p=>`
+    <div class="lp-row">
+      <div class="lp-car">${p.car}</div>
+      <div class="lp-name" style="color:${p.color}">${p.name}</div>
+      ${p.isHost?'<div class="lp-badge">HOST</div>':''}
+      ${socket&&p.id===socket.id?'<div class="lp-you">YOU</div>':''}
+    </div>`).join('');
+  document.getElementById('host-start-area').style.display = isHost?'block':'none';
+  document.getElementById('guest-wait').style.display      = isHost?'none':'block';
+  document.getElementById('server-url-hint').style.display = isHost?'block':'none';
+  if (isHost) buildLvGrid('lobby-lv-grid', M.level, n=>{ M.level=n; }, true);
+  const urlEl = document.getElementById('lobby-url');
+  if (urlEl) urlEl.textContent = window.location.origin;
+}
+
+function startMultiGame(){
+  if(!socket) return;
+  socket.emit('start-game',{ level:M.level, target:M.target, hostPlay:_hostPlay });
+}
+function leaveRoom(){
+  if(socket){ socket.disconnect(); socket=null; }
+  M.mode='solo'; show('screen-home');
+}
+
+function multiAnswer(idx){
+  if(M.lastAns!==-1) return;
+  M.lastAns = idx;
+  for(let i=0;i<4;i++) document.getElementById('a'+i).disabled=true;
+  clearInterval(S.timerID);
+  socket.emit('answer',{displayIdx:idx});
+}
+
+function showMultiQuestion(text, options, sloLabel, timeLimit){
+  M.lastAns=-1;
+  document.getElementById('g-slo').textContent = sloLabel||'';
+  document.getElementById('g-q').textContent   = text;
+  ['A','B','C','D'].forEach((ltr,i)=>{
+    const b = document.getElementById('a'+i);
+    b.className='ans-btn'; b.disabled=false; delete b.dataset.ok;
+    b.querySelector('.ans-letter').textContent = ltr;
+    b.querySelector('.ans-text').textContent   = options[i];
+  });
+  S.timer=timeLimit; updTimer();
+  clearInterval(S.timerID);
+  S.timerID=setInterval(()=>{
+    S.timer--; updTimer();
+    if(S.timer<=5) sndTick();
+    if(S.timer<=0) clearInterval(S.timerID);
+  },1000);
+}
+
+// ── DASHBOARD (host observe) ───────────────────────────────────────────────
+function buildDashboard(players, target){
+  const grid = document.getElementById('dash-grid');
+  const sorted = [...players].sort((a,b)=>b.correct-a.correct);
+  grid.innerHTML = sorted.map((p,i)=>{
+    const pos=i+1;
+    const sid=p.id.replace(/[^a-z0-9]/gi,'_');
+    return `<div class="dash-row" id="dr-${sid}">
+      <div class="dash-pos ${posClass(pos)}">${posLabel(pos)}</div>
+      <div class="dash-car">${p.car}</div>
+      <div class="dash-name" style="color:${p.color}">${p.name}</div>
+      <div class="dash-bar-wrap">
+        <div class="dash-bar-fill" id="dbf-${sid}" style="width:0%;background:${p.color}"></div>
+      </div>
+      <div class="dash-score" id="dbs-${sid}" style="color:${p.color}">0/${target}</div>
+      <div class="dash-streak" id="dbst-${sid}"></div>
+    </div>`;
+  }).join('');
+}
+
+function updateDashboard(players){
+  if(document.getElementById('screen-dashboard').classList.contains('active')){
+    const target=M.target;
+    const sorted=[...players].sort((a,b)=>b.correct-a.correct);
+    sorted.forEach((p,i)=>{
+      const sid=p.id.replace(/[^a-z0-9]/gi,'_');
+      const posEl=document.querySelector('#dr-'+sid+' .dash-pos');
+      if(posEl){posEl.className='dash-pos '+posClass(i+1);posEl.textContent=posLabel(i+1);}
+      const fill=document.getElementById('dbf-'+sid);
+      if(fill) fill.style.width=Math.round((p.correct/target)*100)+'%';
+      const score=document.getElementById('dbs-'+sid);
+      if(score) score.textContent=p.correct+'/'+target;
+      const streak=document.getElementById('dbst-'+sid);
+      if(streak) streak.textContent=streakEmoji(p.streak||0);
+    });
+  }
+}
+
+// ── WINNER OVERLAY ────────────────────────────────────────────────────────
+function showWinnerOverlay(name, car){
+  document.getElementById('wo-name').textContent = car+' '+name;
+  document.getElementById('winner-overlay').classList.add('active');
+}
+function hideWinnerOverlay(){
+  document.getElementById('winner-overlay').classList.remove('active');
+}
+
+// ── MULTI RESULTS ─────────────────────────────────────────────────────────
+function showMultiResults(players, winnerId){
+  const sorted = [...players].sort((a,b)=>b.correct-a.correct);
+  const winner = sorted[0];
+  document.getElementById('r-trophy').textContent = '🏆';
+  document.getElementById('r-label').textContent  = 'Race Over!';
+  document.getElementById('r-name').textContent   = winner.name;
+  document.getElementById('r-msg').textContent    = winner.car+' '+winner.name+' crossed the finish line first! 🔥';
+  document.getElementById('unlock-msg').style.display='none';
+  // Podium (top 3)
+  const podiumOrder = [sorted[1],sorted[0],sorted[2]].filter(Boolean);
+  const podiumH     = ['p2','p1','p3'];
+  const podiumLbl   = ['🥈','🥇','🥉'];
+  document.getElementById('podium').innerHTML = podiumOrder.map((p,i)=>`
+    <div class="podium-block">
+      <div class="podium-car">${p.car}</div>
+      <div class="podium-pname" style="color:${p.color}">${p.name}</div>
+      <div class="podium-bar ${podiumH[i]}"><div class="podium-medal">${podiumLbl[i]}</div></div>
+    </div>`).join('');
+  document.getElementById('leaderboard').innerHTML = sorted.map((p,i)=>`
+    <div class="lb-row r${i+1}">
+      <div class="lb-pos ${posClass(i+1)}">${posLabel(i+1)}</div>
+      <div class="lb-car">${p.car}</div>
+      <div class="lb-name" style="color:${p.color}">${p.name}${socket&&p.id===socket.id?' (You)':''}</div>
+      <div style="text-align:right">
+        <div class="lb-score" style="color:${p.color}">${p.correct}/${M.target}</div>
+      </div>
+    </div>`).join('');
+  const btns=document.getElementById('r-btns');
+  if(M.isHost){
+    btns.innerHTML=`
+      <button class="btn btn-orange" onclick="hostReplay()">Play Again 🏁</button>
+      <button class="btn btn-ghost" onclick="leaveRoom()">End &amp; Exit</button>`;
+  } else {
+    btns.innerHTML=`<button class="btn btn-ghost" onclick="leaveRoom()">Exit to Home</button>`;
+  }
+  show('screen-results');
+  setTimeout(confetti, 300);
+}
+
+function hostReplay(){
+  if(socket) socket.emit('play-again',{level:M.level});
+}
+
+// ── ERRORS ────────────────────────────────────────────────────────────────
+function showErr(src, msg){ const e=document.getElementById(src+'-error'); if(e){e.textContent=msg;e.style.display='block';} }
+function hideErr(src)     { const e=document.getElementById(src+'-error'); if(e){e.style.display='none';e.textContent='';} }
+
+// ── CONFETTI ──────────────────────────────────────────────────────────────
+function confetti(){
+  const cv=document.getElementById('cc'),cx=cv.getContext('2d');
+  cv.width=innerWidth; cv.height=innerHeight;
+  const cols=['#ff6b35','#ffd700','#4ecdc4','#ff4757','#2ed573','#a29bfe','#fff'];
+  const bits=Array.from({length:140},()=>({
+    x:Math.random()*cv.width, y:-20,
+    w:5+Math.random()*9, h:4+Math.random()*6,
+    color:cols[Math.floor(Math.random()*cols.length)],
+    vy:2+Math.random()*4, vx:(Math.random()-.5)*2.5,
+    rot:Math.random()*Math.PI*2, spin:(Math.random()-.5)*.22
+  }));
+  (function draw(){
+    cx.clearRect(0,0,cv.width,cv.height); let alive=false;
+    for(const b of bits){
+      if(b.y<cv.height+20){
+        alive=true;
+        cx.save();cx.translate(b.x,b.y);cx.rotate(b.rot);
+        cx.fillStyle=b.color;cx.fillRect(-b.w/2,-b.h/2,b.w,b.h);
+        cx.restore();
+        b.y+=b.vy; b.x+=b.vx; b.rot+=b.spin;
+      }
+    }
+    if(alive) requestAnimationFrame(draw);
+  })();
+}
+
+// ── CSS SHAKE ──────────────────────────────────────────────────────────────
+const shakeStyle = document.createElement('style');
+shakeStyle.textContent = '@keyframes shake{0%,100%{transform:none}20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-5px)}80%{transform:translateX(5px)}}';
+document.head.appendChild(shakeStyle);
+
+// ── INIT ──────────────────────────────────────────────────────────────────
+loadUnlocks();
+buildLvGrid('solo-lv-grid', S.level, n=>{ S.level=n; });
+buildLvGrid('host-lv-grid', M.level, n=>{ M.level=n; }, true);
+if(!SOCKET_OK){
+  document.querySelectorAll('[onclick="show(\'screen-host-setup\')"]').forEach(b=>{
+    b.title='Start the server first (START-SERVER.bat)';
+    b.style.opacity='.5';
+  });
+}
+</script>
+</body>
+</html>
