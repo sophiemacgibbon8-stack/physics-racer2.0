@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Physics Racer | On the Move</title>
+<title>Energy Racer</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
 body{font-family:'Segoe UI',Arial,sans-serif;background:#0a0a1a;color:#fff;height:100vh;overflow:hidden;user-select:none;}
@@ -237,8 +237,8 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#0a0a1a;color:#fff;heigh
 <!-- HOME -->
 <div id="screen-home" class="screen active">
   <div style="display:flex;flex-direction:column;align-items:center;z-index:10;padding:20px;padding-bottom:100px">
-    <div class="home-title">⚡ Physics Racer</div>
-    <div class="home-sub">On the Move &mdash; SLO Challenge</div>
+    <div class="home-title">⚡ Energy Racer</div>
+    <div class="home-sub">Energy &mdash; Topic Challenge</div>
     <div style="font-size:.6em;color:#333;margin-top:-30px;margin-bottom:6px;letter-spacing:2px">v3 — all levels unlocked</div>
     <div class="home-btns">
       <button class="btn btn-orange btn-wide" onclick="show('screen-solo-setup')">🏎️ &nbsp;Solo Race</button>
@@ -369,7 +369,7 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#0a0a1a;color:#fff;heigh
     <div class="race-board-inner" id="race-board-inner"></div>
   </div>
   <div class="q-area">
-    <div class="slo-chip" id="g-slo">SLO #1</div>
+    <div class="slo-chip" id="g-slo">Topic 1</div>
     <div class="q-box" id="g-q">Loading...</div>
     <div class="ans-grid" id="ans-grid">
       <button class="ans-btn" id="a0" onclick="answer(0)"><span class="ans-letter">A</span><span class="ans-text"></span></button>
@@ -384,7 +384,7 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#0a0a1a;color:#fff;heigh
 <div id="screen-dashboard" class="screen">
   <div class="dash-topbar">
     <div>
-      <div class="dash-title" id="dash-title">🏎️ Physics Racer — Live Race</div>
+      <div class="dash-title" id="dash-title">⚡ Energy Racer — Live Race</div>
       <div class="dash-subtitle" id="dash-sub">Waiting for race to start...</div>
     </div>
     <button class="btn btn-ghost btn-sm" onclick="leaveRoom()">End Race</button>
@@ -423,25 +423,20 @@ body{font-family:'Segoe UI',Arial,sans-serif;background:#0a0a1a;color:#fff;heigh
 <script>
 // ── CONSTANTS ─────────────────────────────────────────────────────────────
 const LEVELS = [
-  {n:1,name:"Definitions",slo:"SLO #1",emoji:"📏"},
-  {n:2,name:"v = d/t",slo:"SLO #2",emoji:"🧮"},
-  {n:3,name:"Real World",slo:"SLO #3",emoji:"🏃"},
-  {n:4,name:"D-T Graphs",slo:"SLO #4-5",emoji:"📈"},
-  {n:5,name:"Acceleration",slo:"SLO #6",emoji:"🚀"},
-  {n:6,name:"S-T Graphs",slo:"SLO #7-8",emoji:"📊"},
-  {n:7,name:"Forces",slo:"SLO #9-11",emoji:"💪"},
-  {n:8,name:"F = ma",slo:"SLO #12",emoji:"⚖️"},
-  {n:9,name:"Mass & Weight",slo:"SLO #13-15",emoji:"🌍"}
+  {n:1,name:"Energy Basics",slo:"Topic 1",emoji:"⚡"},
+  {n:2,name:"Heat Transfer",slo:"Topic 2",emoji:"🔥"},
+  {n:3,name:"Useful & Wasted",slo:"Topic 3",emoji:"💡"},
+  {n:4,name:"Transformations",slo:"Topic 4",emoji:"🪂"},
+  {n:5,name:"GPE Calculations",slo:"Topic 5",emoji:"🧮"},
+  {n:6,name:"KE Calculations",slo:"Topic 6",emoji:"🏃"}
 ];
 const SLO_LBL = {
-  1:'SLO #1 — Definitions & Units',2:'SLO #2 — Calculating with v = d/t',
-  3:'SLO #3 — Real-World Speed',4:'SLO #4 — Distance-Time Graphs',
-  5:'SLO #5 — Interpreting D-T Graphs',6:'SLO #6 — Acceleration (a = v/t)',
-  7:'SLO #7 — Speed-Time Graphs',8:'SLO #8 — Interpreting S-T Graphs',
-  9:'SLO #9 — Forces (push/pull)',10:'SLO #10 — Force Vectors',
-  11:'SLO #11 — Balanced/Unbalanced Forces',12:'SLO #12 — F = ma',
-  13:'SLO #13 — Friction',14:'SLO #14 — Mass & Weight',
-  15:'SLO #15 — Weight in Different Gravity'
+  1:'Topic 1 — Energy types & conservation',
+  2:'Topic 2 — Heat transfer (conduction/convection/radiation)',
+  3:'Topic 3 — Useful vs wasted energy',
+  4:'Topic 4 — Energy transformation chains',
+  5:'Topic 5 — Gravitational potential energy (Ep = mgh)',
+  6:'Topic 6 — Kinetic energy (KE = ½mv²)'
 };
 const MEDALS = ['🥇','🥈','🥉','4️⃣','5️⃣','6️⃣','7️⃣','8️⃣','9️⃣','🔟'];
 const CARS   = ['🏎️','🚗','🚙','🚕','🏍️','🛵','🚌','🚐','🚑','🚒'];
@@ -450,157 +445,106 @@ const COLORS = ['#ff6b35','#4ecdc4','#a29bfe','#ffd700','#fd79a8','#55efc4','#74
 // ── SOLO QUESTION BANK ────────────────────────────────────────────────────
 const Q = {
   1:[
-    {t:"What are the standard units for speed?",o:["kilometres per hour (km/h)","metres per second (m/s)","seconds (s)","metres (m)"],c:1,s:1},
-    {t:"What are the standard units for distance?",o:["seconds (s)","m/s","metres (m)","km/h"],c:2,s:1},
-    {t:"What are the standard units for time?",o:["metres (m)","m/s","km/h","seconds (s)"],c:3,s:1},
-    {t:"In the formula v = d/t, what does 'v' represent?",o:["Volume","Distance","Time","Speed (velocity)"],c:3,s:1},
-    {t:"In the formula v = d/t, what does 'd' represent?",o:["Direction","Speed","Distance","Density"],c:2,s:1},
-    {t:"Speed is calculated by...",o:["Multiplying distance by time","Adding distance and time","Subtracting time from distance","Dividing distance by time"],c:3,s:1},
-    {t:"Which of these is a measurement of speed?",o:["15 metres","15 seconds","15 newtons","15 m/s"],c:3,s:1},
-    {t:"An object NOT moving has a speed of...",o:["Unknown","10 m/s","1 m/s","0 m/s"],c:3,s:1},
-    {t:"The formula v = d/t is used to calculate...",o:["Acceleration","Force","Weight","Speed"],c:3,s:1},
-    {t:"Which is the SI unit symbol for seconds?",o:["sec","S","s","ss"],c:2,s:1},
-    {t:"How fast something moves is called its...",o:["Mass","Speed","Force","Length"],c:1,s:1},
-    {t:"Which quantity is measured in metres?",o:["Time","Speed","Distance","Force"],c:2,s:1},
-    {t:"The 'v' in v = d/t stands for velocity, which means...",o:["Voltage","Volume","Volcano","Speed in a direction"],c:3,s:1},
-    {t:"Which unit makes sense for the speed of a car?",o:["m only","s only","m/s","kg"],c:2,s:1},
-    {t:"A stopwatch measures...",o:["distance","time","speed","weight"],c:1,s:1}
+    {t:"What does the Law of Conservation of Energy state?",o:["Energy can be created but not destroyed","Energy can be destroyed but not created","Energy cannot be created or destroyed, only transferred or transformed","Energy is always lost during transformations"],c:2,s:1},
+    {t:"Name two types of stored energy.",o:["Chemical and gravitational potential","Kinetic and sound","Light and heat","Electrical and kinetic"],c:0,s:1},
+    {t:"Which of these is an ACTIVE type of energy?",o:["Chemical","Gravitational potential","Elastic potential","Kinetic"],c:3,s:1},
+    {t:"Which of these is a STORED (potential) type of energy?",o:["Kinetic","Sound","Chemical potential","Light"],c:2,s:1},
+    {t:"Gravitational potential energy depends on an object's...",o:["Colour and shape","Height and mass","Speed and time","Temperature and volume"],c:1,s:1},
+    {t:"Kinetic energy depends on an object's...",o:["Height and mass","Colour and speed","Mass and velocity","Temperature and time"],c:2,s:1},
+    {t:"A rugby ball held above your head (not moving) has...",o:["Kinetic energy only","Gravitational potential energy","No energy at all","Sound energy"],c:1,s:1},
+    {t:"A netball flying through the air after being thrown has...",o:["Only chemical energy","Gravitational potential energy only","Kinetic energy","No energy"],c:2,s:1},
+    {t:"A stretched rubber band held back, ready to fire, stores...",o:["Kinetic energy","Elastic potential energy","Heat energy","Sound energy"],c:1,s:1},
+    {t:"Chemical energy is stored in...",o:["Only batteries","Food, fuel and batteries","Only moving objects","Light bulbs only"],c:1,s:1},
+    {t:"An unlit hangi pit full of hot stones and food has...",o:["Kinetic energy","Chemical potential energy","No energy","Sound energy"],c:1,s:1},
+    {t:"Which energy type is measured in the same unit for all types?",o:["All energy is measured in joules (J)","Stored energy is in newtons","Active energy is in metres","Each type has its own unit"],c:0,s:1},
+    {t:"Energy that is 'sitting still, waiting to be used' is called...",o:["Active energy","Potential (stored) energy","Kinetic energy","Wasted energy"],c:1,s:1},
+    {t:"A car battery sitting in a shed, fully charged, has...",o:["Kinetic energy","Chemical potential energy","No energy","Light energy"],c:1,s:1},
+    {t:"According to the conservation of energy, when a bungy jumper falls off the Kawarau Bridge, the total energy...",o:["Increases","Decreases to zero","Stays the same, just changes form","Is destroyed on impact"],c:2,s:1}
   ],
   2:[
-    {t:"A car travels 100 m in 10 s. What is its speed?",o:["1 m/s","110 m/s","10 m/s","1000 m/s"],c:2,s:2},
-    {t:"A runner travels 200 m in 40 s. What is their speed?",o:["8 m/s","5 m/s","160 m/s","240 m/s"],c:1,s:2},
-    {t:"A cyclist rides at 6 m/s for 30 s. How far?",o:["5 m","36 m","360 m","180 m"],c:3,s:2},
-    {t:"A ball travels 50 m at 10 m/s. How long?",o:["500 s","0.2 s","40 s","5 s"],c:3,s:2},
-    {t:"A train travels 500 m in 25 s. What is its speed?",o:["475 m/s","2 m/s","525 m/s","20 m/s"],c:3,s:2},
-    {t:"A swimmer moves at 2 m/s for 60 s. How far?",o:["30 m","58 m","62 m","120 m"],c:3,s:2},
-    {t:"A student walks 80 m in 40 s. What is their speed?",o:["0.5 m/s","120 m/s","3200 m/s","2 m/s"],c:3,s:2},
-    {t:"A car travels at 25 m/s for 12 s. How far?",o:["2.08 m","37 m","13 m","300 m"],c:3,s:2},
-    {t:"To find speed, you do...",o:["d × t","d + t","d / t","d − t"],c:2,s:2},
-    {t:"To find distance (rearranging v = d/t), you do...",o:["v / t","v × t","v + t","v − t"],c:1,s:2},
-    {t:"To find time (rearranging v = d/t), you do...",o:["d × v","d + v","d / v","d − v"],c:2,s:2},
-    {t:"A car covers 60 m in 6 s. Its speed is...",o:["6 m/s","10 m/s","360 m/s","66 m/s"],c:1,s:2},
-    {t:"A horse runs at 12 m/s for 5 s. Distance?",o:["2.4 m","17 m","7 m","60 m"],c:3,s:2},
-    {t:"At 8 m/s, how long to cover 64 m?",o:["72 s","56 s","8 s","512 s"],c:2,s:2},
-    {t:"A car drives 250 m in 10 s. Speed?",o:["2.5 m/s","25 m/s","250 m/s","260 m/s"],c:1,s:2}
+    {t:"Which of the following is a method of energy transfer through empty space?",o:["Conduction","Convection","Radiation","Insulation"],c:2,s:2},
+    {t:"Which heat transfer process involves heat transfer through direct contact of particles?",o:["Radiation","Conduction","Convection","Evaporation"],c:1,s:2},
+    {t:"Which heat transfer method is responsible for warm air rising?",o:["Radiation","Convection","Conduction","Absorption"],c:1,s:2},
+    {t:"A metal spoon left in a hot drink becomes warm mainly by...",o:["Radiation","Convection","Conduction","Evaporation"],c:2,s:2},
+    {t:"A radiator heats a room mainly by...",o:["Conduction","Convection","Radiation","Insulation"],c:1,s:2},
+    {t:"How does the sun's heat reach the Earth?",o:["Conduction","Convection","Radiation","It doesn't, only light reaches us"],c:2,s:2},
+    {t:"In an electric kettle, warm water rises and cool water sinks to replace it. This is...",o:["Conduction","Convection","Radiation","Friction"],c:1,s:2},
+    {t:"Conduction happens best in...",o:["A vacuum","Solids, through touching particles","Empty space","Only in liquids"],c:1,s:2},
+    {t:"Which process needs NO particles at all to transfer heat?",o:["Conduction","Convection","Radiation","All of them need particles"],c:2,s:2},
+    {t:"During conduction, particles that gain heat energy...",o:["Stop moving completely","Vibrate more and pass energy to neighbouring particles","Turn into gas","Disappear"],c:1,s:2},
+    {t:"Standing near a hāngi and feeling heat on your face without touching anything is an example of...",o:["Conduction","Convection","Radiation","Insulation"],c:2,s:2},
+    {t:"In a kettle with the element at the bottom, why does the water at the bottom rise?",o:["It becomes denser and sinks","It heats up, becomes less dense and rises","It freezes and floats","Gravity pulls it up"],c:1,s:2},
+    {t:"Which heat transfer method explains why a car park feels hotter than grass on a sunny day?",o:["Conduction","Convection","Radiation","Insulation"],c:2,s:2},
+    {t:"A pot of water heating on a stove: heat moves from the element into the pot base by...",o:["Radiation","Conduction","Convection","Evaporation"],c:1,s:2},
+    {t:"Convection currents occur because...",o:["Warm fluid becomes denser and sinks","Warm fluid becomes less dense and rises, cool fluid sinks to replace it","Cool fluid always rises","Heat only moves downwards"],c:1,s:2}
   ],
   3:[
-    {t:"A sprinter runs 100 m in 10 s. Average speed?",o:["90 m/s","1000 m/s","0.1 m/s","10 m/s"],c:3,s:3},
-    {t:"A car travels 2400 m in 120 s. Speed in m/s?",o:["1200 m/s","2 m/s","0.05 m/s","20 m/s"],c:3,s:3},
-    {t:"A cheetah runs at 30 m/s for 5 s. Distance?",o:["6 m","35 m","25 m","150 m"],c:3,s:3},
-    {t:"A bus takes 180 s to travel 900 m. Speed in m/s?",o:["3 m/s","300 m/s","0.2 m/s","5 m/s"],c:3,s:3},
-    {t:"A cyclist covers 1500 m at 10 m/s. How many seconds?",o:["15000 s","1490 s","1510 s","150 s"],c:3,s:3},
-    {t:"A swimmer finishes 200 m in 150 s. Avg speed?",o:["75 m/s","4 m/s","0.75 m/s","1.33 m/s"],c:3,s:3},
-    {t:"A toy car travels 3 m in 0.5 s. What is its speed?",o:["1.5 m/s","3.5 m/s","0.17 m/s","6 m/s"],c:3,s:3},
-    {t:"Runner A: 500 m in 50 s. Runner B: 400 m in 45 s. Faster?",o:["They are equal","Runner B","Cannot tell","Runner A"],c:3,s:3},
-    {t:"A jet flies 4000 m in 20 s. Speed?",o:["200 m/s","2 m/s","20 m/s","80 m/s"],c:0,s:3},
-    {t:"A snail moves 0.6 m in 60 s. Speed?",o:["10 m/s","36 m/s","0.01 m/s","0.6 m/s"],c:2,s:3},
-    {t:"A walker covers 1200 m in 600 s. Speed?",o:["2 m/s","0.5 m/s","720 m/s","720000 m/s"],c:0,s:3},
-    {t:"A scooter at 5 m/s rides for 120 s. Distance?",o:["240 m","600 m","60 m","2.4 m"],c:1,s:3},
-    {t:"A car at 25 m/s — how long to travel 500 m?",o:["12500 s","525 s","20 s","2 s"],c:2,s:3},
-    {t:"A runner does 1500 m in 300 s. Average speed?",o:["3 m/s","5 m/s","0.2 m/s","7500 m/s"],c:1,s:3},
-    {t:"A train at 30 m/s — how far in 90 s?",o:["3 m","2700 m","120 m","0.33 m"],c:1,s:3}
+    {t:"A light bulb is turned on. What is the useful energy output?",o:["Heat","Sound","Light","Electrical"],c:2,s:3},
+    {t:"A light bulb is turned on. What is the main wasted energy?",o:["Light","Heat","Chemical","Gravitational potential"],c:1,s:3},
+    {t:"In an electric kettle, the useful energy output is...",o:["Sound","Heat energy in the water","Light","Wasted heat to the air"],c:1,s:3},
+    {t:"A kettle uses 150 J of electrical energy. 120 J heats the water usefully. How much is wasted?",o:["150 J","120 J","30 J","270 J"],c:2,s:3},
+    {t:"Wasted energy is energy that...",o:["Disappears completely","Is not useful for the intended purpose, often lost as heat or sound","Is always sound energy","Is stored for later use"],c:1,s:3},
+    {t:"A phone charging: which is the useful energy transfer?",o:["Electrical energy to chemical energy stored in the battery","Electrical energy to sound","Electrical energy to light only","No useful transfer occurs"],c:0,s:3},
+    {t:"A car engine: petrol's chemical energy mostly becomes kinetic energy, but a large amount is wasted as...",o:["Light","Heat and sound","Gravitational potential energy","Elastic potential energy"],c:1,s:3},
+    {t:"An old incandescent light bulb wastes far more energy as heat than a modern LED bulb. This means the LED bulb is...",o:["Less efficient","More efficient","Exactly the same efficiency","Not related to efficiency"],c:1,s:3},
+    {t:"A speaker playing music: the useful energy output is...",o:["Heat","Sound","Light","Kinetic energy of the speaker moving across the room"],c:1,s:3},
+    {t:"Total energy input into a device equals...",o:["Useful energy only","Wasted energy only","Useful energy plus wasted energy","Twice the useful energy"],c:2,s:3},
+    {t:"A washing machine motor: useful output is kinetic energy of the drum. A wasted output would be...",o:["Heat from friction in the motor","More kinetic energy","Extra washing power","Nothing is wasted"],c:0,s:3},
+    {t:"Why do laptops get warm when you use them?",o:["Wasted heat energy from electrical processes inside","They are designed to produce heat as their main output","Sound energy converting to heat","Gravitational potential energy loss"],c:0,s:3},
+    {t:"A solar panel's useful energy transformation is...",o:["Electrical energy to light energy","Light energy to electrical energy","Chemical energy to light energy","Heat energy to light energy"],c:1,s:3},
+    {t:"Efficiency is calculated as...",o:["Total energy input ÷ useful energy output","Wasted energy ÷ total energy input × 100%","Useful energy output ÷ total energy input × 100%","Useful energy + wasted energy"],c:2,s:3},
+    {t:"A fridge motor's main wasted energy output is...",o:["Light","Sound and heat","Chemical energy","Gravitational potential energy"],c:1,s:3}
   ],
   4:[
-    {t:"On a d-t graph, a horizontal (flat) line means the object is...",o:["accelerating","slowing down","stationary (not moving)","speeding up"],c:2,s:4},
-    {t:"On a d-t graph, a straight diagonal line going up means...",o:["the object is stopped","constant speed","the object is accelerating","going backwards"],c:1,s:4},
-    {t:"What does the gradient of a d-t graph represent?",o:["acceleration","force","time","speed"],c:3,s:4},
-    {t:"What is plotted on the y-axis of a d-t graph?",o:["speed","time","distance","force"],c:2,s:4},
-    {t:"What is plotted on the x-axis of a d-t graph?",o:["distance","time","speed","mass"],c:1,s:4},
-    {t:"A curve on a d-t graph that gets steeper shows...",o:["constant speed","deceleration","stationary","acceleration"],c:3,s:4},
-    {t:"A curve on a d-t graph that gets less steep shows...",o:["acceleration","constant speed","deceleration","reversing"],c:2,s:4},
-    {t:"On a d-t graph, the steeper the line, the...",o:["slower","faster","heavier","further away"],c:1,s:4},
-    {t:"To find speed from a d-t graph, calculate the...",o:["area under the line","gradient of the line","y-intercept","total time"],c:1,s:4},
-    {t:"A flat line at d = 5 m means the object is...",o:["5 m away and stationary","moving at 5 m/s","accelerating","at the start"],c:0,s:4},
-    {t:"On a d-t graph, a line going DOWN means the object is...",o:["speeding up","stationary","moving back towards the start","not moving"],c:2,s:4},
-    {t:"Two cars: line A steep, line B shallow. A is _____ than B.",o:["slower","faster","stopped","heavier"],c:1,s:4},
-    {t:"A horizontal line at distance = 0 means...",o:["at the start, not moving","moving fast","accelerating","at the finish line"],c:0,s:4},
-    {t:"A d-t graph shows distance increasing slowly, then fast. The object is...",o:["decelerating","staying still","accelerating","stopped"],c:2,s:4},
-    {t:"Why do we draw a line of best fit?",o:["to look pretty","to show the overall trend","to hide bad data","to fill the page"],c:1,s:4}
+    {t:"A skydiver jumps from a plane. At the very start (before falling), their main energy type is...",o:["Kinetic energy","Gravitational potential energy","Sound energy","Elastic potential energy"],c:1,s:4},
+    {t:"As the skydiver falls and speeds up, gravitational potential energy is mostly transformed into...",o:["Chemical energy","Kinetic energy","Elastic potential energy","Nuclear energy"],c:1,s:4},
+    {t:"Once the skydiver reaches maximum (terminal) speed, kinetic energy stops increasing. The remaining GPE lost is converted into...",o:["More kinetic energy","Thermal energy due to air resistance","Elastic potential energy","Chemical energy"],c:1,s:4},
+    {t:"Throughout the skydiver's fall, the total amount of energy...",o:["Increases steadily","Decreases steadily","Remains constant, only changing form","Is destroyed by air resistance"],c:2,s:4},
+    {t:"The correct energy transformation chain for a torch is...",o:["Light → chemical → electrical","Chemical → electrical → light","Electrical → chemical → sound","Kinetic → light → chemical"],c:1,s:4},
+    {t:"A stretched rubber band launcher fires a pom-pom. The correct chain is...",o:["Kinetic → elastic potential → gravitational potential","Elastic potential → kinetic → gravitational potential (as it rises)","Chemical → kinetic → elastic potential","Gravitational potential → elastic potential → chemical"],c:1,s:4},
+    {t:"A balloon squeal (letting go of an untied balloon) has this energy chain:",o:["Chemical → elastic potential → kinetic → thermal + sound","Kinetic → chemical → elastic potential","Light → sound → chemical","Gravitational potential → chemical → light"],c:0,s:4},
+    {t:"A paper plane thrown across the room: the correct chain from your arm to landing is...",o:["Gravitational potential → chemical → kinetic","Chemical (in your muscles) → kinetic → gravitational potential energy as it rises, back to kinetic as it falls","Kinetic → chemical → elastic potential","Elastic potential → chemical → kinetic"],c:1,s:4},
+    {t:"A boulder balanced on a cliff edge starts to roll downhill. Its energy transformation is...",o:["Kinetic → gravitational potential","Gravitational potential → kinetic","Chemical → gravitational potential","Elastic potential → kinetic"],c:1,s:4},
+    {t:"An electric kettle transforms energy in this order:",o:["Heat → electrical → kinetic","Electrical → heat energy (via the element) → kinetic energy of water particles","Kinetic → electrical → heat","Chemical → heat → electrical"],c:1,s:4},
+    {t:"A sprinter like Zoe Hobbs at the start of a race (crouched in the blocks, not yet moving) has mostly...",o:["Kinetic energy","Chemical potential energy stored in her muscles","Gravitational potential energy","Sound energy"],c:1,s:4},
+    {t:"As a sprinter accelerates out of the blocks, chemical energy in the muscles is transformed into...",o:["Gravitational potential energy only","Kinetic energy (and some wasted heat)","Elastic potential energy","Nuclear energy"],c:1,s:4},
+    {t:"A wind turbine's energy transformation chain is...",o:["Electrical → kinetic → chemical","Kinetic (wind) → kinetic (blades) → electrical","Chemical → kinetic → electrical","Gravitational potential → electrical → kinetic"],c:1,s:4},
+    {t:"A hydroelectric dam's energy transformation chain is...",o:["Gravitational potential (stored water) → kinetic (flowing water) → electrical","Kinetic → gravitational potential → chemical","Chemical → gravitational potential → kinetic","Electrical → kinetic → gravitational potential"],c:0,s:4},
+    {t:"Striking a match, the correct energy transformation chain is...",o:["Chemical → kinetic → gravitational potential","Kinetic (striking) → heat → chemical → light and heat","Light → chemical → kinetic","Heat → light → kinetic"],c:1,s:4}
   ],
   5:[
-    {t:"What is the formula for acceleration (from rest)?",o:["a = v × t","a = v + t","a = v − t","a = v / t"],c:3,s:6},
-    {t:"What are the units for acceleration?",o:["m/s","m","s","m/s²"],c:3,s:6},
-    {t:"Acceleration measures how quickly...",o:["mass changes","speed changes","force changes","distance changes"],c:1,s:6},
-    {t:"A car speeds up from 0 to 20 m/s in 5 s. Acceleration?",o:["100 m/s²","0.25 m/s²","4 m/s²","25 m/s²"],c:2,s:6},
-    {t:"A bike speeds up from 0 to 8 m/s in 4 s. Acceleration?",o:["32 m/s²","0.5 m/s²","2 m/s²","12 m/s²"],c:2,s:6},
-    {t:"A car at constant speed has acceleration of...",o:["0 m/s²","1 m/s²","constant","10 m/s²"],c:0,s:6},
-    {t:"A rocket: 0 to 30 m/s in 6 s. Acceleration?",o:["180 m/s²","0.2 m/s²","36 m/s²","5 m/s²"],c:3,s:6},
-    {t:"Slowing down is called...",o:["acceleration","constant speed","deceleration","stopping"],c:2,s:6},
-    {t:"What is the symbol used for acceleration?",o:["v","d","a","s"],c:2,s:6},
-    {t:"A car goes from 0 to 50 m/s in 10 s. Acceleration?",o:["500 m/s²","60 m/s²","5 m/s²","0.2 m/s²"],c:2,s:6},
-    {t:"Acceleration is calculated by dividing...",o:["distance by time","force by mass","velocity by time","mass by time"],c:2,s:6},
-    {t:"From rest to 16 m/s in 4 s. Acceleration?",o:["64 m/s²","12 m/s²","4 m/s²","20 m/s²"],c:2,s:6},
-    {t:"Which has the biggest acceleration?",o:["0→10 m/s in 5 s","0→20 m/s in 5 s","0→10 m/s in 2 s","0→4 m/s in 4 s"],c:2,s:6},
-    {t:"A drone reaches 24 m/s after 6 s. Acceleration?",o:["144 m/s²","18 m/s²","4 m/s²","30 m/s²"],c:2,s:6},
-    {t:"An object reaches 12 m/s after 3 s from rest. Acceleration?",o:["36 m/s²","0.25 m/s²","9 m/s²","4 m/s²"],c:3,s:6}
+    {t:"What does the 'h' represent in Ep = mgh?",o:["Heat","Height","Horsepower","Hertz"],c:1,s:5},
+    {t:"A 2 kg object is at the top of a 10 m hill. What is its GPE? (g = 10 m/s²)",o:["20 J","100 J","200 J","2000 J"],c:2,s:5},
+    {t:"A 5 kg object is 4 m above the ground. Calculate its GPE.",o:["20 J","200 J","9 J","40 J"],c:1,s:5},
+    {t:"A 1 kg tramper's pack sits on a shelf 2 m high. What is its GPE?",o:["2 J","20 J","200 J","0.2 J"],c:1,s:5},
+    {t:"A 10 kg rock is lifted 3 m up a Canterbury riverbank. Calculate its GPE.",o:["30 J","300 J","3000 J","13 J"],c:1,s:5},
+    {t:"A 0.5 kg rugby ball is kicked 8 m into the air. What is its GPE at the top?",o:["4 J","40 J","400 J","0.4 J"],c:1,s:5},
+    {t:"A skier at the top of Coronet Peak (mass 60 kg) is 500 m above the base. Calculate their GPE.",o:["3000 J","30000 J","300000 J","5000 J"],c:2,s:5},
+    {t:"An object has GPE of 500 J, mass 5 kg. What is its height? (g = 10 m/s²)",o:["5 m","10 m","50 m","100 m"],c:1,s:5},
+    {t:"An object has GPE of 800 J at a height of 4 m. What is its mass?",o:["8 kg","20 kg","32 kg","200 kg"],c:1,s:5},
+    {t:"A 3 kg object at the top of a 10 m hill has how much GPE, and how much KE at the bottom if no energy is lost?",o:["GPE = 30 J, KE at bottom = 30 J","GPE = 300 J, KE at bottom = 300 J","GPE = 30 J, KE at bottom = 0 J","GPE = 300 J, KE at bottom = 0 J"],c:1,s:5},
+    {t:"If no energy is lost to friction or air resistance, GPE at the top of a hill equals...",o:["Half the KE at the bottom","Zero at the bottom","KE at the bottom","Twice the KE at the bottom"],c:2,s:5},
+    {t:"A 4 kg object is raised from 2 m to 6 m. What is the INCREASE in GPE?",o:["80 J","160 J","240 J","40 J"],c:1,s:5},
+    {t:"An 8 kg suitcase is lifted onto a 1.5 m shelf. Calculate its GPE.",o:["12 J","120 J","1200 J","80 J"],c:1,s:5},
+    {t:"A 25 kg dog leaps to a height of 0.4 m. Calculate its GPE.",o:["10 J","100 J","1000 J","64 J"],c:1,s:5},
+    {t:"An object has GPE of 1500 J and a mass of 15 kg. What is its height? (g = 10 m/s²)",o:["10 m","15 m","100 m","1.5 m"],c:0,s:5}
   ],
   6:[
-    {t:"On a speed-time graph, a horizontal flat line means...",o:["accelerating","constant speed","stopped","deceleration"],c:1,s:8},
-    {t:"On a speed-time graph, a line sloping up means...",o:["constant speed","deceleration","stopped","acceleration"],c:3,s:8},
-    {t:"On a speed-time graph, a line sloping down means...",o:["constant speed","acceleration","deceleration","reversing"],c:2,s:8},
-    {t:"What does the gradient of a speed-time graph represent?",o:["distance","time","speed","acceleration"],c:3,s:8},
-    {t:"A speed-time line flat at y = 0 means the object is...",o:["moving fast","stationary","accelerating","at constant speed"],c:1,s:8},
-    {t:"What is plotted on the y-axis of a speed-time graph?",o:["distance","speed","time","force"],c:1,s:8},
-    {t:"The area under a speed-time graph represents...",o:["acceleration","force","time","distance travelled"],c:3,s:8},
-    {t:"A horizontal line at speed = 15 m/s means the object...",o:["accelerates at 15 m/s²","moves 15 m","moves at 15 m/s constantly","stops at 15 s"],c:2,s:8},
-    {t:"A steeper upward slope on an s-t graph means...",o:["smaller acceleration","greater acceleration","constant speed","slower speed"],c:1,s:8},
-    {t:"An object with acceleration = 0 has an s-t graph that is...",o:["sloping up","sloping down","horizontal flat line","V-shaped"],c:2,s:8},
-    {t:"Two objects: A's s-t line is shallower than B's. A's acceleration is...",o:["greater than B","equal to B","less than B","zero"],c:2,s:8},
-    {t:"A bus' s-t graph: flat then slopes to 0. The bus...",o:["speeds up then stationary","constant speed then decelerates to stop","accelerates then stops suddenly","reverses"],c:1,s:8},
-    {t:"Object A: 3 m/s², Object B: 5 m/s². Steeper s-t line?",o:["A","B","Same","Neither"],c:1,s:8},
-    {t:"A line sloping steeply down on s-t graph shows...",o:["fast acceleration","fast deceleration","constant speed","stationary"],c:1,s:8},
-    {t:"What is plotted on the x-axis of a speed-time graph?",o:["distance","speed","time","mass"],c:2,s:8}
-  ],
-  7:[
-    {t:"A force is a...",o:["mass","push or pull","speed","direction"],c:1,s:9},
-    {t:"What is the unit for force?",o:["metres","kilograms","seconds","newtons"],c:3,s:9},
-    {t:"What is the symbol for newtons?",o:["n","Nw","N","nm"],c:2,s:9},
-    {t:"Weight is the force of ___ pulling on an object.",o:["wind","friction","gravity","magnetism"],c:2,s:10},
-    {t:"The upward force on a plane wing is called...",o:["thrust","lift","drag","friction"],c:1,s:10},
-    {t:"The forward force from an engine is called...",o:["lift","weight","thrust","support"],c:2,s:10},
-    {t:"The force that resists motion between surfaces is...",o:["lift","gravity","thrust","friction"],c:3,s:10},
-    {t:"The upward force from a surface is called...",o:["thrust","support (normal force)","lift","drag"],c:1,s:10},
-    {t:"When forces are equal and opposite, they are...",o:["unbalanced","balanced","accelerating","resultant"],c:1,s:11},
-    {t:"Balanced forces cause an object to...",o:["accelerate","speed up","stay still or move at constant speed","change direction"],c:2,s:11},
-    {t:"Unbalanced forces cause an object to...",o:["stay still","accelerate (change speed/direction)","never move","stop instantly"],c:1,s:11},
-    {t:"The single force replacing all forces is called the...",o:["balanced force","push force","resultant force","reaction force"],c:2,s:11},
-    {t:"A box: gravity 50 N down, floor 50 N up. Forces are...",o:["balanced","unbalanced","zero","accelerating"],c:0,s:11},
-    {t:"Car: 200 N forward, 50 N friction back. Resultant force?",o:["250 N forward","250 N back","150 N forward","150 N back"],c:2,s:11},
-    {t:"Forces are drawn on diagrams as...",o:["dots","squares","arrows (vectors)","circles"],c:2,s:10}
-  ],
-  8:[
-    {t:"In F = ma, what does 'F' stand for?",o:["friction","force","fraction","fall"],c:1,s:12},
-    {t:"In F = ma, what does 'm' stand for?",o:["motion","mass","minutes","metres"],c:1,s:12},
-    {t:"In F = ma, what does 'a' stand for?",o:["area","amount","acceleration","angle"],c:2,s:12},
-    {t:"A 2 kg object accelerates at 5 m/s². Force?",o:["2.5 N","7 N","3 N","10 N"],c:3,s:12},
-    {t:"A 10 kg object has a 50 N force. Acceleration?",o:["500 m/s²","60 m/s²","0.2 m/s²","5 m/s²"],c:3,s:12},
-    {t:"A 100 N force, acceleration 4 m/s². Mass?",o:["400 kg","96 kg","25 kg","104 kg"],c:2,s:12},
-    {t:"5 kg mass, 20 m/s² acceleration. Force?",o:["4 N","25 N","15 N","100 N"],c:3,s:12},
-    {t:"3 kg mass, 6 N force. Acceleration?",o:["18 m/s²","0.5 m/s²","9 m/s²","2 m/s²"],c:3,s:12},
-    {t:"A 40 N force on an 8 kg mass. Acceleration?",o:["320 m/s²","48 m/s²","32 m/s²","5 m/s²"],c:3,s:12},
-    {t:"12 N force, 4 m/s² acceleration. Mass?",o:["48 kg","8 kg","3 kg","16 kg"],c:2,s:12},
-    {t:"A 4 kg ball pushed with 12 N. Acceleration?",o:["48 m/s²","8 m/s²","16 m/s²","3 m/s²"],c:3,s:12},
-    {t:"200 N pushes a 50 kg trolley. Acceleration?",o:["250 m/s²","150 m/s²","4 m/s²","10000 m/s²"],c:2,s:12},
-    {t:"Doubling the force on the same mass means...",o:["acceleration stays the same","acceleration doubles","acceleration halves","mass doubles"],c:1,s:12},
-    {t:"F = ma is also known as...",o:["Newton's 1st law","Newton's 2nd law","Newton's 3rd law","Hooke's law"],c:1,s:12},
-    {t:"A 6 N force acts on a 2 kg object. Acceleration?",o:["12 m/s²","8 m/s²","4 m/s²","3 m/s²"],c:3,s:12}
-  ],
-  9:[
-    {t:"Mass is measured in...",o:["newtons (N)","metres (m)","kilograms (kg)","seconds (s)"],c:2,s:14},
-    {t:"Weight is measured in...",o:["kilograms (kg)","metres (m)","seconds (s)","newtons (N)"],c:3,s:14},
-    {t:"Mass measures how much ___ is in an object.",o:["gravity","matter","weight","force"],c:1,s:14},
-    {t:"Weight is caused by...",o:["air resistance","friction","gravity pulling down","magnetism"],c:2,s:14},
-    {t:"An astronaut on Moon vs Earth has...",o:["different mass, same weight","same mass, different weight","both the same","both different"],c:1,s:15},
-    {t:"Why does an astronaut weigh less on the Moon?",o:["no atmosphere","Moon's gravity is weaker","loses mass","it is colder"],c:1,s:15},
-    {t:"Friction is HELPFUL when...",o:["machines wear out","brakes stop a car","engines get hot","tyres get bald"],c:1,s:13},
-    {t:"Friction is UNHELPFUL when...",o:["walking on the ground","gripping a pencil","engine parts wear and lose energy","using brakes"],c:2,s:13},
-    {t:"Friction can be reduced by...",o:["adding more weight","using rougher surfaces","using oil (lubrication)","increasing speed"],c:2,s:13},
-    {t:"On Earth, gravity pulls with about how many N per kg?",o:["1 N/kg","100 N/kg","0.1 N/kg","10 N/kg"],c:3,s:15},
-    {t:"A 5 kg object on Earth weighs approximately...",o:["5 N","0.5 N","500 N","50 N"],c:3,s:15},
-    {t:"A 10 kg backpack on Earth weighs about...",o:["1 N","10 N","100 N","1000 N"],c:2,s:15},
-    {t:"Your mass on the Moon compared to Earth is...",o:["smaller","bigger","exactly the same","zero"],c:2,s:15},
-    {t:"In space far from any planet, an object's weight is...",o:["same as on Earth","much greater","zero","cannot be measured"],c:2,s:15},
-    {t:"Which is a vector quantity (has direction)?",o:["mass","time","temperature","weight"],c:3,s:14}
+    {t:"What does 'v' represent in KE = ½mv²?",o:["Volume","Velocity (speed)","Voltage","Vector"],c:1,s:6},
+    {t:"A 750 kg car travels at 9 m/s. What is its kinetic energy?",o:["6750 J","30375 J","3375 J","60750 J"],c:1,s:6},
+    {t:"A 2 kg ball moves at 4 m/s. Calculate its KE.",o:["8 J","16 J","32 J","4 J"],c:1,s:6},
+    {t:"A 60 kg sprinter, like Zoe Hobbs, running at 10 m/s. Calculate her KE.",o:["600 J","3000 J","6000 J","300 J"],c:1,s:6},
+    {t:"An All Blacks player (100 kg) sprinting at 8 m/s. Calculate his KE.",o:["800 J","3200 J","6400 J","400 J"],c:1,s:6},
+    {t:"A 1000 kg car moving at 20 m/s. Calculate its KE.",o:["20000 J","200000 J","10000 J","400000 J"],c:1,s:6},
+    {t:"A 0.5 kg rugby ball travels at 6 m/s. What is its KE?",o:["3 J","9 J","18 J","1.5 J"],c:1,s:6},
+    {t:"If you double an object's speed (mass stays the same), its kinetic energy...",o:["Stays the same","Doubles","Triples","Quadruples (x4)"],c:3,s:6},
+    {t:"If you double an object's mass (speed stays the same), its kinetic energy...",o:["Stays the same","Doubles","Quadruples","Halves"],c:1,s:6},
+    {t:"A 70 kg cyclist moving at 5 m/s. Calculate their KE.",o:["350 J","875 J","1750 J","175 J"],c:1,s:6},
+    {t:"Between a 60 kg sprinter at 10 m/s and an 80 kg cyclist at 8 m/s, who has more kinetic energy?",o:["The sprinter (3000 J vs 2560 J)","The cyclist (2560 J vs 3000 J)","They are equal","Cannot be calculated"],c:0,s:6},
+    {t:"A car's KE is 4000 J at a speed of 10 m/s. What is its mass?",o:["40 kg","80 kg","400 kg","800 kg"],c:1,s:6},
+    {t:"A 1200 kg car travels at 15 m/s. Calculate its kinetic energy.",o:["18000 J","67500 J","135000 J","270000 J"],c:2,s:6},
+    {t:"A 0.2 kg tennis ball travels at 40 m/s. Calculate its kinetic energy.",o:["80 J","160 J","8 J","320 J"],c:1,s:6},
+    {t:"An object has a kinetic energy of 2450 J at a speed of 7 m/s. What is its mass?",o:["50 kg","100 kg","200 kg","700 kg"],c:1,s:6}
   ]
 };
 
@@ -721,7 +665,7 @@ function toggleHostPlay() {
 let S = {
   level:1, name:'', qs:[], qi:0, total:10,
   correct:0, order:[], timerID:null, timer:20, locked:false,
-  unlocked:Array(9).fill(true)
+  unlocked:Array(LEVELS.length).fill(true)
 };
 
 function loadUnlocks(){}
@@ -814,7 +758,7 @@ function soloEnd(){
   clearInterval(S.timerID);
   const pct = Math.round(S.correct/S.total*100);
   let trophy, msg;
-  if(pct>=90){ trophy='🏆'; msg='PERFECT! Physics master! 🔥'; }
+  if(pct>=90){ trophy='🏆'; msg='PERFECT! Energy master! 🔥'; }
   else if(pct>=70){ trophy='🥇'; msg=pct+'% — Awesome work! Level unlocked!'; }
   else if(pct>=50){ trophy='🥈'; msg=pct+'% — Good effort! Try again to improve.'; }
   else { trophy='🚗'; msg=pct+"% — Keep practising, you've got this!"; }
@@ -835,7 +779,7 @@ function soloEnd(){
     </div>`;
   const ul = document.getElementById('unlock-msg');
   ul.style.display = 'none';
-  if(pct>=70 && S.level<9 && !S.unlocked[S.level]){
+  if(pct>=70 && S.level<LEVELS.length && !S.unlocked[S.level]){
     S.unlocked[S.level]=true; saveUnlocks();
     ul.textContent = '🔓 Level '+(S.level+1)+' Unlocked: '+LEVELS[S.level].name+'!';
     ul.style.display = 'block';
@@ -937,7 +881,7 @@ function initSocket(){
     const me = players.find(p=>p.id===socket.id);
     if(me && me.isObserver){
       buildDashboard(players, target);
-      document.getElementById('dash-title').textContent = '🏎️ Physics Racer — Live Race';
+      document.getElementById('dash-title').textContent = '⚡ Energy Racer — Live Race';
       document.getElementById('dash-sub').textContent   = `Level ${level} — First to ${target} correct wins!`;
       show('screen-dashboard');
     } else {
